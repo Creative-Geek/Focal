@@ -1,0 +1,6 @@
+name = "focal-finance-tracker"
+compatibility_date = "2025-10-04"
+
+# Static site configuration - deploy dist folder as assets
+[site]
+bucket = "./dist"
