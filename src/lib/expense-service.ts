@@ -1,4 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { Expense, ExpenseData } from '../types';
+
+const EXPENSES_STORAGE_KEY = 'focal-expenses';
+const API_KEY_STORAGE_KEY = 'focal-api-key';
+const DEFAULT_CURRENCY_STORAGE_KEY = 'focal-default-currency';
 
 export interface LineItem {
   description: string;
@@ -6,27 +11,11 @@ export interface LineItem {
   price: number;
 }
 
-export interface Expense {
-  id: string;
-  merchant: string;
-  date: string;
-  total: number;
-  lineItems: LineItem[];
-  currency: string;
-  category: string;
-}
-
-export type ExpenseData = Omit<Expense, 'id'>;
-
-const EXPENSES_STORAGE_KEY = 'focal-expenses';
-const API_KEY_STORAGE_KEY = 'focal-api-key';
-const DEFAULT_CURRENCY_STORAGE_KEY = 'focal-default-currency';
-
 class ExpenseService {
   async processReceipt(base64Image: string): Promise<{ success: boolean; data?: ExpenseData; error?: string }> {
     try {
       const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-      
+
       if (!apiKey || apiKey === 'your-cloudflare-api-key') {
         return {
           success: false,
@@ -57,13 +46,13 @@ class ExpenseService {
     } catch (error: any) {
       console.error('Error processing receipt:', error);
       let errorMessage = 'An unexpected error occurred while processing the receipt.';
-      
+
       if (error.message?.includes('API key not valid')) {
         errorMessage = 'The provided Google AI API key is invalid. Please check your key in the settings.';
       } else if (error.message) {
         errorMessage = `The AI service returned an error: ${error.message}`;
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }

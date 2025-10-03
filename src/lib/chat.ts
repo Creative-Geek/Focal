@@ -30,8 +30,8 @@ class ChatService {
   }
 
   async sendMessage(
-    message: string, 
-    model?: string, 
+    message: string,
+    model?: string,
     onChunk?: (chunk: string) => void
   ): Promise<ChatResponse> {
     try {
@@ -40,7 +40,7 @@ class ChatService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, model, stream: !!onChunk }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -68,7 +68,7 @@ class ChatService {
 
         return { success: true };
       }
-      
+
       // Non-streaming response
       return await response.json();
     } catch (error) {
@@ -80,11 +80,11 @@ class ChatService {
   async getMessages(): Promise<ChatResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/messages`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Failed to get messages:', error);
@@ -97,11 +97,11 @@ class ChatService {
       const response = await fetch(`${this.baseUrl}/clear`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Failed to clear messages:', error);
@@ -184,11 +184,11 @@ class ChatService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model })
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Failed to update model:', error);
@@ -200,9 +200,9 @@ class ChatService {
 export const chatService = new ChatService();
 
 export const formatTime = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
   });
 };
 
@@ -221,8 +221,8 @@ export const generateSessionTitle = (firstUserMessage?: string): string => {
 
   // Clean and truncate the message
   const cleanMessage = firstUserMessage.trim().replace(/\s+/g, ' ');
-  const truncated = cleanMessage.length > 40 
-    ? cleanMessage.slice(0, 37) + '...' 
+  const truncated = cleanMessage.length > 40
+    ? cleanMessage.slice(0, 37) + '...'
     : cleanMessage;
 
   return `${truncated} • ${dateTime}`;
@@ -230,7 +230,7 @@ export const generateSessionTitle = (firstUserMessage?: string): string => {
 
 export const renderToolCall = (toolCall: ToolCall): string => {
   const result = toolCall.result as WeatherResult | MCPResult | ErrorResult | undefined;
-  
+
   if (!result) return `⚠️ ${toolCall.name}: No result`;
   if ('error' in result) return `❌ ${toolCall.name}: ${result.error}`;
   if ('content' in result) return `🔧 ${toolCall.name}: Executed`;
