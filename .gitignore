@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Lockfiles (let deployment regenerate)
+bun.lock
+bun.lockb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -27,5 +31,4 @@ dist-ssr
 .wrangler
 .dev.vars*
 .env.*
-
 data/
