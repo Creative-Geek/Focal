@@ -1,62 +1,28 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Expense, ExpenseData } from '../types';
-
+import type { Expense } from '../../worker/types';
+export type ExpenseData = Omit<Expense, 'id'>;
 const EXPENSES_STORAGE_KEY = 'focal-expenses';
 const API_KEY_STORAGE_KEY = 'focal-api-key';
 const DEFAULT_CURRENCY_STORAGE_KEY = 'focal-default-currency';
-
-export interface LineItem {
-  description: string;
-  quantity: number;
-  price: number;
-}
-
 class ExpenseService {
+  private baseUrl = '/api';
   async processReceipt(base64Image: string): Promise<{ success: boolean; data?: ExpenseData; error?: string }> {
     try {
       const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-
-      if (!apiKey || apiKey === 'your-cloudflare-api-key') {
-        return {
-          success: false,
-          error: 'AI API key is missing. Please configure your Google AI API key in the application settings to proceed.'
-        };
+      const body: { image: string; apiKey?: string } = { image: base64Image };
+      if (apiKey) {
+        body.apiKey = apiKey;
       }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
-        systemInstruction: `You are an expert receipt processing AI. Extract the following information from the user's receipt image and return it as a valid JSON object. The JSON schema should be: { "merchant": string, "date": "YYYY-MM-DD", "total": number, "currency": "USD" | "EUR" | "GBP" | etc., "category": "Food & Drink" | "Groceries" | "Travel" | "Shopping" | "Utilities" | "Other", "lineItems": [{ "description": string, "quantity": number, "price": number }] }. If a value is not clear, make a reasonable guess or use a placeholder. Ensure the total is a number. Respond ONLY with the JSON object.`,
-        generationConfig: { responseMimeType: "application/json" },
+      const response = await fetch(`${this.baseUrl}/process-receipt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-
-      const match = base64Image.match(/^data:(image\/(?:jpeg|png|webp));base64,(.*)$/);
-      if (!match) {
-        return { success: false, error: 'Invalid image format. Only JPEG, PNG, and WEBP are supported.' };
-      }
-
-      const [, mimeType, base64Data] = match;
-      const imagePart = { inlineData: { mimeType, data: base64Data } };
-      const result = await model.generateContent(["Extract the receipt data as JSON.", imagePart]);
-      const response = result.response;
-      const text = response.text();
-      const parsedData = JSON.parse(text);
-
-      return { success: true, data: parsedData };
-    } catch (error: any) {
-      console.error('Error processing receipt:', error);
-      let errorMessage = 'An unexpected error occurred while processing the receipt.';
-
-      if (error.message?.includes('API key not valid')) {
-        errorMessage = 'The provided Google AI API key is invalid. Please check your key in the settings.';
-      } else if (error.message) {
-        errorMessage = `The AI service returned an error: ${error.message}`;
-      }
-
-      return { success: false, error: errorMessage };
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to process receipt:', error);
+      return { success: false, error: 'Failed to connect to the server.' };
     }
   }
-
   async saveExpense(expenseData: ExpenseData): Promise<{ success: boolean; data?: Expense; error?: string }> {
     try {
       const expenses = await this.getExpensesFromStorage();
@@ -69,7 +35,6 @@ class ExpenseService {
       return { success: false, error: 'Failed to save expense to local storage.' };
     }
   }
-
   async getExpenses(): Promise<{ success: boolean; data?: Expense[]; error?: string }> {
     try {
       const expenses = await this.getExpensesFromStorage();
@@ -79,7 +44,6 @@ class ExpenseService {
       return { success: false, error: 'Failed to retrieve expenses from local storage.' };
     }
   }
-
   async deleteExpense(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       let expenses = await this.getExpensesFromStorage();
@@ -91,7 +55,6 @@ class ExpenseService {
       return { success: false, error: 'Failed to delete expense from local storage.' };
     }
   }
-
   async updateExpense(id: string, updatedData: ExpenseData): Promise<{ success: boolean; data?: Expense; error?: string }> {
     try {
       const expenses = await this.getExpensesFromStorage();
@@ -108,12 +71,12 @@ class ExpenseService {
       return { success: false, error: 'Failed to update expense in local storage.' };
     }
   }
-
   private async getExpensesFromStorage(): Promise<Expense[]> {
     const storedExpenses = localStorage.getItem(EXPENSES_STORAGE_KEY);
     if (storedExpenses) {
       try {
         const parsed = JSON.parse(storedExpenses);
+        // Sort by date descending
         return Array.isArray(parsed) ? parsed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
       } catch (e) {
         console.error("Failed to parse expenses from localStorage", e);
@@ -122,10 +85,8 @@ class ExpenseService {
     }
     return [];
   }
-
   getDefaultCurrency(): string {
     return localStorage.getItem(DEFAULT_CURRENCY_STORAGE_KEY) || 'USD';
   }
 }
-
 export const expenseService = new ExpenseService();
