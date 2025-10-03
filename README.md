@@ -48,12 +48,14 @@ Follow these instructions to get the project up and running on your local machin
 ### Installation
 
 1.  **Clone the repository:**
+
     ```bash
     git clone https://github.com/your-username/focal-finance-tracker.git
     cd focal-finance-tracker
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     bun install
     ```
@@ -84,14 +86,17 @@ This will start the Vite development server on `http://localhost:3000` and the C
 This project is designed for easy deployment to Cloudflare Pages.
 
 1.  **Login to Wrangler:**
+
     ```bash
     bun wrangler login
     ```
 
 2.  **Deploy the application:**
+
     ```bash
     bun deploy
     ```
+
     This command will build the Vite application and deploy it along with the Cloudflare Worker.
 
 3.  **Configure Production Secrets:**
