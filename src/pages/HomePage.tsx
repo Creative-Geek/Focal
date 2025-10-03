@@ -1,0 +1,235 @@
+import React, { useState, useRef, useCallback } from 'react';
+import Webcam from 'react-webcam';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, X, Loader, Save, Lightbulb, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose, DrawerDescription } from '@/components/ui/drawer';
+import { Toaster, toast } from 'sonner';
+import { expenseService, ExpenseData } from '@/lib/expense-service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
+import { SettingsDialog } from '@/components/SettingsDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ExpenseForm } from '@/components/ExpenseForm';
+const videoConstraints = {
+  width: 1280,
+  height: 720,
+  facingMode: 'environment',
+};
+export const HomePage: React.FC = () => {
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [extractedData, setExtractedData] = useState<ExpenseData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const webcamRef = useRef<Webcam>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const handleImageProcessing = async (base64Image: string) => {
+    setIsProcessing(true);
+    setError(null);
+    try {
+      const response = await expenseService.processReceipt(base64Image);
+      if (response.success && response.data) {
+        const defaultCurrency = expenseService.getDefaultCurrency();
+        setExtractedData({
+          ...response.data,
+          currency: response.data.currency || defaultCurrency,
+          lineItems: response.data.lineItems || [],
+        });
+      } else {
+        setError(response.error || 'Failed to extract data from receipt.');
+        toast.error('Processing Failed', { description: response.error });
+      }
+    } catch (e) {
+      setError('An unexpected error occurred during processing.');
+      toast.error('Processing Error', { description: 'Could not connect to the server.' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  const capture = useCallback(async () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        setIsCameraOpen(false);
+        handleImageProcessing(imageSrc);
+      }
+    }
+  }, [webcamRef]);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Image = e.target?.result as string;
+        if (base64Image) {
+          handleImageProcessing(base64Image);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const handleSave = async () => {
+    if (extractedData) {
+      setIsSaving(true);
+      try {
+        const response = await expenseService.saveExpense(extractedData);
+        if (response.success) {
+          toast.success('Expense Saved!', { description: `${extractedData.merchant} for ${extractedData.total} has been added.` });
+          setExtractedData(null);
+          navigate('/expenses');
+        } else {
+          toast.error('Save Failed', { description: response.error });
+        }
+      } catch (e) {
+        toast.error('Save Error', { description: 'Could not connect to the server.' });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+  const ReviewForm = ({ isMobile }: { isMobile: boolean }) => {
+    const Wrapper = isMobile ? Drawer : Dialog;
+    const Content = isMobile ? DrawerContent : DialogContent;
+    const Header = isMobile ? DrawerHeader : DialogHeader;
+    const Title = isMobile ? DrawerTitle : DialogTitle;
+    const Description = isMobile ? DrawerDescription : DialogDescription;
+    const Footer = isMobile ? DrawerFooter : DialogFooter;
+    const Close = isMobile ? DrawerClose : DialogClose;
+    return (
+      <Wrapper open={isProcessing || !!extractedData} onOpenChange={(open) => !open && setExtractedData(null)}>
+        <Content className={isMobile ? "" : "max-w-2xl"}>
+          <Header>
+            <Title>{isProcessing ? 'Analyzing Receipt...' : 'Review Expense'}</Title>
+            <Description>
+              {isProcessing ? 'Please wait while we extract the details from your receipt.' : 'Review and edit the extracted details before saving.'}
+            </Description>
+          </Header>
+          {isProcessing ? (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4 px-4">
+              <Loader className="h-12 w-12 animate-spin text-focal-blue-500" />
+              <p className="text-muted-foreground">Our AI is hard at work...</p>
+            </div>
+          ) : (
+            extractedData && (
+              <div className="px-4">
+                <ExpenseForm value={extractedData} onChange={setExtractedData} />
+              </div>
+            )
+          )}
+          <Footer>
+            <Close asChild>
+              <Button variant="outline" disabled={isSaving}>Cancel</Button>
+            </Close>
+            <Button onClick={handleSave} disabled={isProcessing || isSaving}>
+              {isSaving ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Expense
+            </Button>
+          </Footer>
+        </Content>
+      </Wrapper>
+    );
+  };
+  return (
+    <>
+      <Toaster richColors position="top-center" />
+      <div className="relative flex-grow flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-neutral-950 dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)]"></div>
+        <div className="absolute inset-0 bg-hero-gradient -z-10" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="text-center space-y-6 z-10"
+        >
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
+            Scan, Review, Done.
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
+            Instantly capture, analyze, and organize your expenses with a single photo. The fastest way to track your spending.
+          </p>
+          <div className="flex justify-center items-center gap-4">
+            <Button
+              size="lg"
+              onClick={() => setIsCameraOpen(true)}
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-10 py-6 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+            >
+              <Camera className="mr-3 h-6 w-6" />
+              Scan Receipt
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-10 py-6 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+            >
+              <Upload className="mr-3 h-6 w-6" />
+              Upload Photo
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+        </motion.div>
+        {error && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 max-w-md w-full">
+            <Alert variant="destructive">
+              <AlertTitle>Processing Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+      </div>
+      <AnimatePresence>
+        {isCameraOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4"
+          >
+            <div className="relative w-full max-w-4xl">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+                className="rounded-lg shadow-2xl w-full"
+              />
+              <div className="absolute bottom-4 left-4 right-4 bg-black/50 text-white p-3 rounded-lg text-sm flex items-center gap-3">
+                <Lightbulb className="h-5 w-5 text-yellow-300 flex-shrink-0" />
+                <span>For best results: ensure good lighting and place the receipt on a flat, contrasting surface.</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-6">
+              <Button
+                onClick={capture}
+                className="w-20 h-20 rounded-full bg-white hover:bg-gray-200 ring-4 ring-white ring-offset-4 ring-offset-black/50"
+              >
+                <Camera className="h-10 w-10 text-black" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCameraOpen(false)}
+                className="absolute top-6 right-6 text-white hover:bg-white/20 w-12 h-12 rounded-full"
+              >
+                <X className="h-8 w-8" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <ReviewForm isMobile={isMobile} />
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+    </>
+  );
+};
