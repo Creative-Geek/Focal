@@ -2,9 +2,6 @@ import { defineConfig, loadEnv } from "vite";
 import path from "path";
 import react from "@vitejs/plugin-react";
 import { exec } from "node:child_process";
-import pino from "pino";
-
-const logger = pino();
 
 const stripAnsi = (str: string) =>
   str.replace(
@@ -23,27 +20,23 @@ const emitLog = (level: "info" | "warn" | "error", rawMessage: string) => {
     .filter((part) => part.trim().length > 0);
 
   if (parts.length === 0) {
-    logger[level](cleaned.trimEnd());
+    console[level](cleaned.trimEnd());
     return;
   }
 
   for (const part of parts) {
-    logger[level](part);
+    console[level](part);
   }
 };
 
-// 3. Create the custom logger for Vite
+// Create the custom logger for Vite
 const customLogger = {
   warnOnce: (msg: string) => emitLog("warn", msg),
-
-  // Use Pino's methods, passing the cleaned message
   info: (msg: string) => emitLog("info", msg),
   warn: (msg: string) => emitLog("warn", msg),
   error: (msg: string) => emitLog("error", msg),
   hasErrorLogged: () => false,
-
-  // Keep these as-is
-  clearScreen: () => { },
+  clearScreen: () => {},
   hasWarned: false,
 };
 
