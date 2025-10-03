@@ -1,11 +1,13 @@
 # Migration from Cloudflare to Standard Deployment
 
 ## Overview
+
 This document outlines the removal of unused Cloudflare-specific code from this project. The app was built using a Cloudflare-focused template but is actually using Google Gemini AI, not Cloudflare services.
 
 ## What Was Removed
 
 ### 1. Cloudflare Dependencies
+
 - `@cloudflare/vite-plugin` - Cloudflare-specific Vite build plugin
 - `@cloudflare/workers-types` - TypeScript types for Cloudflare Workers
 - `agents` - Cloudflare Agents SDK (wrapper for Durable Objects)
@@ -16,16 +18,19 @@ This document outlines the removal of unused Cloudflare-specific code from this 
 - `mcp-client`, `mcp-remote` - Unused MCP integration
 
 ### 2. Cloudflare Configuration Files
+
 - `wrangler.jsonc` - Cloudflare Workers deployment configuration
 - `worker/` directory - Entire backend was Cloudflare Workers-based
 
 ### 3. Build Scripts
+
 - Removed `deploy` script that used `wrangler deploy`
 - Removed `cf-typegen` script
 
 ## Current Architecture
 
 The app now runs as a pure client-side application:
+
 - **Frontend**: React + Vite + TypeScript
 - **AI Processing**: Direct Google Gemini API calls from the browser
 - **Storage**: localStorage for expenses (no backend needed)
@@ -34,12 +39,14 @@ The app now runs as a pure client-side application:
 ## Why This Change?
 
 The original deployment was failing with:
+
 ```
-In order to use Durable Objects with a free plan, you must create a namespace 
+In order to use Durable Objects with a free plan, you must create a namespace
 using a `new_sqlite_classes` migration. [code: 10097]
 ```
 
 This happened because:
+
 1. The template used Cloudflare Durable Objects for storage
 2. Durable Objects require a paid Cloudflare plan
 3. **The app doesn't actually need Cloudflare** - it was already using:
@@ -52,21 +59,25 @@ This happened because:
 Now you can deploy this app to any static hosting provider:
 
 ### Option 1: Vercel
+
 ```bash
 npm i -g vercel
 vercel
 ```
 
 ### Option 2: Netlify
+
 ```bash
 npm i -g netlify-cli
 netlify deploy
 ```
 
 ### Option 3: GitHub Pages
+
 Add to your repository settings or use GitHub Actions.
 
 ### Option 4: Any Static Host
+
 Just run `bun run build` and upload the `dist/` folder.
 
 ## Environment Variables
