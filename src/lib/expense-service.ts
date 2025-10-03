@@ -26,7 +26,7 @@ class ExpenseService {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
         model: "gemini-2.0-flash-exp",
-        systemInstruction: `You are an expert receipt processing AI. Extract the following information from the user's receipt image and return it as a valid JSON object. The JSON schema should be: { "merchant": string, "date": "YYYY-MM-DD", "total": number, "currency": "USD" | "EUR" | "GBP" | etc., "category": "Food & Drink" | "Groceries" | "Travel" | "Shopping" | "Utilities" | "Other", "lineItems": [{ "description": string, "quantity": number, "price": number }] }. If a value is not clear, make a reasonable guess or use a placeholder. Ensure the total is a number. Respond ONLY with the JSON object.`,
+        systemInstruction: `You are an expert receipt processing AI. Extract the following information from the user's receipt image and return it as a valid JSON object. The JSON schema should be: { "merchant": string, "date": "YYYY-MM-DD", "total": number, "currency": string (use ISO 4217 codes like "USD", "EUR", "GBP", "JPY", "CAD", "EGP", "SAR" - never use "Unknown"), "category": "Food & Drink" | "Groceries" | "Travel" | "Shopping" | "Utilities" | "Other", "lineItems": [{ "description": string, "quantity": number, "price": number }] }. IMPORTANT: The currency field must be a valid 3-letter ISO 4217 currency code. If you cannot determine the currency from the receipt, use "USD" as the default. Never use "Unknown" or any invalid currency code. If a value is not clear, make a reasonable guess or use a placeholder. Ensure the total is a number. Respond ONLY with the JSON object.`,
         generationConfig: { responseMimeType: "application/json" },
       });
 
@@ -114,13 +114,39 @@ class ExpenseService {
     if (storedExpenses) {
       try {
         const parsed = JSON.parse(storedExpenses);
-        return Array.isArray(parsed) ? parsed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
+        if (Array.isArray(parsed)) {
+          // Clean up any expenses with invalid currency codes
+          const cleanedExpenses = parsed.map(expense => ({
+            ...expense,
+            currency: this.validateCurrency(expense.currency)
+          }));
+          // If any currencies were fixed, save the cleaned data back
+          const hasInvalidCurrency = parsed.some(exp => exp.currency !== this.validateCurrency(exp.currency));
+          if (hasInvalidCurrency) {
+            localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(cleanedExpenses));
+            console.log('Fixed invalid currency codes in stored expenses');
+          }
+          return cleanedExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        }
+        return [];
       } catch (e) {
         console.error("Failed to parse expenses from localStorage", e);
         return [];
       }
     }
     return [];
+  }
+
+  private validateCurrency(currency: string): string {
+    // List of valid ISO 4217 currency codes that the app supports
+    const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'EGP', 'SAR'];
+
+    if (!currency || currency === 'Unknown' || currency.length !== 3) {
+      return 'USD';
+    }
+
+    const upperCurrency = currency.toUpperCase();
+    return validCurrencies.includes(upperCurrency) ? upperCurrency : 'USD';
   }
 
   getDefaultCurrency(): string {

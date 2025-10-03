@@ -1,16 +1,49 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Wallet, TrendingUp, PackageOpen, Tag, Trash2, Pencil, Search } from 'lucide-react';
-import { expenseService } from '@/lib/expense-service';
+import React, { useEffect, useState, useMemo } from "react";
+import { motion } from "framer-motion";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Wallet,
+  TrendingUp,
+  PackageOpen,
+  Tag,
+  Trash2,
+  Pencil,
+  Search,
+} from "lucide-react";
+import { expenseService } from "@/lib/expense-service";
 import type { Expense } from "../../worker/types";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +55,34 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from 'sonner';
-import { EditExpenseDialog } from '@/components/EditExpenseDialog';
-import { Toaster } from '@/components/ui/sonner';
-const formatCurrency = (amount: number, currency: string = 'USD') => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+import { toast } from "sonner";
+import { EditExpenseDialog } from "@/components/EditExpenseDialog";
+import { Toaster } from "@/components/ui/sonner";
+const formatCurrency = (amount: number, currency: string = "USD") => {
+  // Validate currency code and fallback to USD if invalid
+  const validCurrency =
+    currency && currency !== "Unknown" && currency.length === 3
+      ? currency
+      : "USD";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: validCurrency,
+    }).format(amount);
+  } catch (error) {
+    // If the currency is still invalid, fallback to USD
+    console.warn(`Invalid currency code: ${currency}, falling back to USD`);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  }
 };
-const StatCard: React.FC<{title: string;value: string;icon: React.ReactNode;}> = ({ title, value, icon }) => (
+const StatCard: React.FC<{
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+}> = ({ title, value, icon }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -39,14 +93,21 @@ const StatCard: React.FC<{title: string;value: string;icon: React.ReactNode;}> =
     </CardContent>
   </Card>
 );
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
+const COLORS = [
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#6366f1",
+];
 export const ExpensesPage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const fetchExpenses = async () => {
     setLoading(true);
     setError(null);
@@ -55,10 +116,10 @@ export const ExpensesPage: React.FC = () => {
       if (response.success && response.data) {
         setExpenses(response.data);
       } else {
-        setError(response.error || 'Failed to fetch expenses.');
+        setError(response.error || "Failed to fetch expenses.");
       }
     } catch (e) {
-      setError('An unexpected error occurred.');
+      setError("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -77,7 +138,9 @@ export const ExpensesPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     const response = await expenseService.deleteExpense(id);
     if (response.success) {
-      setExpenses(prevExpenses => prevExpenses.filter(exp => exp.id !== id));
+      setExpenses((prevExpenses) =>
+        prevExpenses.filter((exp) => exp.id !== id)
+      );
       toast.success("Expense deleted successfully.");
     } else {
       toast.error("Failed to delete expense.", { description: response.error });
@@ -88,32 +151,53 @@ export const ExpensesPage: React.FC = () => {
     setIsEditDialogOpen(true);
   };
   const handleSaveEdit = (updatedExpense: Expense) => {
-    setExpenses(prevExpenses =>
-      prevExpenses.map(exp => (exp.id === updatedExpense.id ? updatedExpense : exp))
+    setExpenses((prevExpenses) =>
+      prevExpenses.map((exp) =>
+        exp.id === updatedExpense.id ? updatedExpense : exp
+      )
     );
   };
   const totalSpent = filteredExpenses.reduce((acc, exp) => acc + exp.total, 0);
   const totalTransactions = filteredExpenses.length;
-  const averageTransaction = totalTransactions > 0 ? totalSpent / totalTransactions : 0;
+  const averageTransaction =
+    totalTransactions > 0 ? totalSpent / totalTransactions : 0;
   const stats = [
-    { title: "Total Spent", value: formatCurrency(totalSpent), icon: <Wallet className="h-4 w-4 text-muted-foreground" /> },
-    { title: "Transactions", value: String(totalTransactions), icon: <TrendingUp className="h-4 w-4 text-muted-foreground" /> },
-    { title: "Average Transaction", value: formatCurrency(averageTransaction), icon: <Tag className="h-4 w-4 text-muted-foreground" /> },
+    {
+      title: "Total Spent",
+      value: formatCurrency(totalSpent),
+      icon: <Wallet className="h-4 w-4 text-muted-foreground" />,
+    },
+    {
+      title: "Transactions",
+      value: String(totalTransactions),
+      icon: <TrendingUp className="h-4 w-4 text-muted-foreground" />,
+    },
+    {
+      title: "Average Transaction",
+      value: formatCurrency(averageTransaction),
+      icon: <Tag className="h-4 w-4 text-muted-foreground" />,
+    },
   ];
   const barChartData = filteredExpenses
     .slice()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((exp) => ({
-      name: new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      total: exp.total
+      name: new Date(exp.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      total: exp.total,
     }));
   const pieChartData = useMemo(() => {
     const categoryTotals = filteredExpenses.reduce((acc, expense) => {
-      const category = expense.category || 'Other';
+      const category = expense.category || "Other";
       acc[category] = (acc[category] || 0) + expense.total;
       return acc;
     }, {} as Record<string, number>);
-    return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
+    return Object.entries(categoryTotals).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }, [filteredExpenses]);
   if (loading) {
     return (
@@ -143,8 +227,12 @@ export const ExpensesPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
         <PackageOpen className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No expenses found</h3>
-        <p className="mt-1 text-sm text-gray-500">Get started by scanning your first receipt.</p>
+        <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">
+          No expenses found
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Get started by scanning your first receipt.
+        </p>
       </div>
     );
   }
@@ -158,10 +246,17 @@ export const ExpensesPage: React.FC = () => {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
       >
         <div className="space-y-8">
-          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white">Expenses Dashboard</h1>
+          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white">
+            Expenses Dashboard
+          </h1>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {stats.map((stat) => (
-              <StatCard key={stat.title} title={stat.title} value={stat.value} icon={stat.icon} />
+              <StatCard
+                key={stat.title}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+              />
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -174,17 +269,33 @@ export const ExpensesPage: React.FC = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                      <XAxis
+                        dataKey="name"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${value}`}
+                      />
                       <Tooltip
                         contentStyle={{
-                          background: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: 'var(--radius)'
+                          background: "hsl(var(--background))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "var(--radius)",
                         }}
-                        cursor={{ fill: 'hsl(var(--muted))' }}
+                        cursor={{ fill: "hsl(var(--muted))" }}
                       />
-                      <Bar dataKey="total" fill="rgb(59, 130, 246)" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="total"
+                        fill="rgb(59, 130, 246)"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -198,12 +309,25 @@ export const ExpensesPage: React.FC = () => {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={pieChartData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
                         {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
                       <Legend iconSize={10} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -241,13 +365,25 @@ export const ExpensesPage: React.FC = () => {
                 <TableBody>
                   {filteredExpenses.map((expense) => (
                     <TableRow key={expense.id}>
-                      <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                      <TableCell className="font-medium">{expense.merchant}</TableCell>
-                      <TableCell><Badge variant="outline">{expense.category}</Badge></TableCell>
-                      <TableCell className="text-right">{formatCurrency(expense.total, expense.currency)}</TableCell>
+                      <TableCell>
+                        {new Date(expense.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {expense.merchant}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{expense.category}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(expense.total, expense.currency)}
+                      </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center items-center gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(expense)}
+                          >
                             <Pencil className="h-4 w-4 text-muted-foreground" />
                           </Button>
                           <AlertDialog>
@@ -258,14 +394,20 @@ export const ExpensesPage: React.FC = () => {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Are you sure?
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this expense record.
+                                  This action cannot be undone. This will
+                                  permanently delete this expense record.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(expense.id)} className="bg-destructive hover:bg-destructive/90">
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(expense.id)}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -281,28 +423,42 @@ export const ExpensesPage: React.FC = () => {
           </Card>
           {/* Mobile Card List */}
           <div className="md:hidden space-y-4">
-            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">Recent Transactions</h2>
+            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+              Recent Transactions
+            </h2>
             {filteredExpenses.map((expense) => (
               <Card key={expense.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle>{expense.merchant}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{new Date(expense.date).toLocaleDateString()}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </p>
                     </div>
                     <Badge variant="outline">{expense.category}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-right">{formatCurrency(expense.total, expense.currency)}</p>
+                  <p className="text-2xl font-bold text-right">
+                    {formatCurrency(expense.total, expense.currency)}
+                  </p>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(expense)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(expense)}
+                  >
                     <Pencil className="h-4 w-4 mr-2" /> Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                      >
                         <Trash2 className="h-4 w-4 mr-2" /> Delete
                       </Button>
                     </AlertDialogTrigger>
@@ -310,12 +466,16 @@ export const ExpensesPage: React.FC = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this expense record.
+                          This action cannot be undone. This will permanently
+                          delete this expense record.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(expense.id)} className="bg-destructive hover:bg-destructive/90">
+                        <AlertDialogAction
+                          onClick={() => handleDelete(expense.id)}
+                          className="bg-destructive hover:bg-destructive/90"
+                        >
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
