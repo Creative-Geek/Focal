@@ -1,9 +1,6 @@
 /**
  * Simple AI Chat, Use it to understand how AI chat works.
  * This is a **Dummy homepage**. Make sure to rewrite it for your application. You may use the components and styles.
- * 
- * NOTE: This page requires a backend to function. After removing Cloudflare Workers,
- * this demo will not work unless you implement a new backend.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -14,7 +11,8 @@ import {Card} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { chatService, formatTime, renderToolCall, generateSessionTitle, MODELS } from '../lib/chat';
-import type { ChatState, SessionInfo } from '../types';
+import type { ChatState, SessionInfo } from '../../worker/types';
+
 
 export function DemoPage() { // Don't touch this exporting, Its a named export
   const [isDark, setIsDark] = useState(() => {

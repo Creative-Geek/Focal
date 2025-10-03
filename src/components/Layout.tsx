@@ -1,14 +1,13 @@
-import React, { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { ScanLine, Settings, Home, Wallet } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
-import { SettingsDialog } from "./SettingsDialog";
-import { Button } from "./ui/button";
+import React, { useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { ScanLine, Settings, Home, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ThemeToggle } from './ThemeToggle';
+import { SettingsDialog } from './SettingsDialog';
+import { Button } from './ui/button';
 const Header: React.FC = () => {
-  const activeLinkClass = "text-focal-blue-500";
-  const inactiveLinkClass =
-    "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white";
+  const activeLinkClass = 'text-focal-blue-500';
+  const inactiveLinkClass = 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white';
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,10 +24,7 @@ const Header: React.FC = () => {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                cn(
-                  "font-semibold transition-colors duration-200",
-                  isActive ? activeLinkClass : inactiveLinkClass
-                )
+                cn('font-semibold transition-colors duration-200', isActive ? activeLinkClass : inactiveLinkClass)
               }
             >
               Scan
@@ -36,10 +32,7 @@ const Header: React.FC = () => {
             <NavLink
               to="/expenses"
               className={({ isActive }) =>
-                cn(
-                  "font-semibold transition-colors duration-200",
-                  isActive ? activeLinkClass : inactiveLinkClass
-                )
+                cn('font-semibold transition-colors duration-200', isActive ? activeLinkClass : inactiveLinkClass)
               }
             >
               Expenses
@@ -51,58 +44,41 @@ const Header: React.FC = () => {
     </header>
   );
 };
-const Footer: React.FC<{ onSettingsClick: () => void }> = ({
-  onSettingsClick,
-}) => {
+const Footer: React.FC<{ onSettingsClick: () => void }> = ({ onSettingsClick }) => {
   return (
     <footer className="bg-background border-t hidden sm:block">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500 dark:text-gray-400">
         <div className="flex justify-center items-center gap-4">
-          <p>
-            Built with ❤️ at Cloudflare. All expenses are stored locally in your
-            browser.
-          </p>
+          <p>Built with ❤️ at Cloudflare. All expenses are stored locally in your browser.</p>
           <Button variant="ghost" size="sm" onClick={onSettingsClick}>
             <Settings className="h-4 w-4 mr-2" />
             API Key Settings
           </Button>
         </div>
         <p className="mt-2 text-xs text-gray-400">
-          AI features require a Google AI API key. Configure your key in
-          settings to enable receipt scanning.
+          AI features require a Google AI API key. Configure your key in settings to enable receipt scanning.
         </p>
       </div>
     </footer>
   );
 };
-const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
-  onSettingsClick,
-}) => {
+const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({ onSettingsClick }) => {
   const location = useLocation();
-  const activeLinkClass = "text-focal-blue-500";
-  const inactiveLinkClass = "text-gray-500 dark:text-gray-400";
+  const activeLinkClass = 'text-focal-blue-500';
+  const inactiveLinkClass = 'text-gray-500 dark:text-gray-400';
   const getLinkClass = (path: string) =>
-    cn(
-      "flex flex-col items-center gap-1 transition-colors duration-200 w-1/3",
-      location.pathname === path ? activeLinkClass : inactiveLinkClass
-    );
+    cn('flex flex-col items-center gap-1 transition-colors duration-200 w-1/3', location.pathname === path ? activeLinkClass : inactiveLinkClass);
   return (
     <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t h-16 z-40 flex items-center justify-around">
-      <NavLink to="/" className={getLinkClass("/")}>
+      <NavLink to="/" className={getLinkClass('/')}>
         <Home className="h-6 w-6" />
         <span className="text-xs font-medium">Scan</span>
       </NavLink>
-      <NavLink to="/expenses" className={getLinkClass("/expenses")}>
+      <NavLink to="/expenses" className={getLinkClass('/expenses')}>
         <Wallet className="h-6 w-6" />
         <span className="text-xs font-medium">Expenses</span>
       </NavLink>
-      <button
-        onClick={onSettingsClick}
-        className={cn(
-          "flex flex-col items-center gap-1 transition-colors duration-200 w-1/3",
-          inactiveLinkClass
-        )}
-      >
+      <button onClick={onSettingsClick} className={cn('flex flex-col items-center gap-1 transition-colors duration-200 w-1/3', inactiveLinkClass)}>
         <Settings className="h-6 w-6" />
         <span className="text-xs font-medium">Settings</span>
       </button>

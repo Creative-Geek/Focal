@@ -81,7 +81,7 @@ function watchDependenciesPlugin() {
 export default ({ mode }: { mode: string }) => {
   const env = loadEnv(mode, process.cwd());
   return defineConfig({
-    plugins: [react(), watchDependenciesPlugin()],
+    plugins: [react(), cloudflare(), watchDependenciesPlugin()],
     build: {
       minify: true,
       sourcemap: "inline", // Use inline source maps for better error reporting
