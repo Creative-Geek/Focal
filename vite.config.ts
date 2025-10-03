@@ -36,7 +36,7 @@ const customLogger = {
   warn: (msg: string) => emitLog("warn", msg),
   error: (msg: string) => emitLog("error", msg),
   hasErrorLogged: () => false,
-  clearScreen: () => {},
+  clearScreen: () => { },
   hasWarned: false,
 };
 
