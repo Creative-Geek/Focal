@@ -1,21 +1,37 @@
-import React, { useState, useRef, useCallback } from 'react';
-import Webcam from 'react-webcam';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, X, Loader, Save, Lightbulb, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerClose, DrawerDescription } from '@/components/ui/drawer';
-import { Toaster, toast } from 'sonner';
-import { expenseService, ExpenseData } from '@/lib/expense-service';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useNavigate } from 'react-router-dom';
-import { SettingsDialog } from '@/components/SettingsDialog';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { ExpenseForm } from '@/components/ExpenseForm';
+import React, { useState, useRef, useCallback } from "react";
+import Webcam from "react-webcam";
+import { motion, AnimatePresence } from "framer-motion";
+import { Camera, X, Loader, Save, Lightbulb, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import { Toaster, toast } from "sonner";
+import { expenseService, ExpenseData } from "@/lib/expense-service";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ExpenseForm } from "@/components/ExpenseForm";
 const videoConstraints = {
   width: 1280,
   height: 720,
-  facingMode: 'environment',
+  facingMode: "environment",
 };
 export const HomePage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -41,12 +57,14 @@ export const HomePage: React.FC = () => {
           lineItems: response.data.lineItems || [],
         });
       } else {
-        setError(response.error || 'Failed to extract data from receipt.');
-        toast.error('Processing Failed', { description: response.error });
+        setError(response.error || "Failed to extract data from receipt.");
+        toast.error("Processing Failed", { description: response.error });
       }
     } catch (e) {
-      setError('An unexpected error occurred during processing.');
-      toast.error('Processing Error', { description: 'Could not connect to the server.' });
+      setError("An unexpected error occurred during processing.");
+      toast.error("Processing Error", {
+        description: "Could not connect to the server.",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -79,14 +97,18 @@ export const HomePage: React.FC = () => {
       try {
         const response = await expenseService.saveExpense(extractedData);
         if (response.success) {
-          toast.success('Expense Saved!', { description: `${extractedData.merchant} for ${extractedData.total} has been added.` });
+          toast.success("Expense Saved!", {
+            description: `${extractedData.merchant} for ${extractedData.total} has been added.`,
+          });
           setExtractedData(null);
-          navigate('/expenses');
+          navigate("/expenses");
         } else {
-          toast.error('Save Failed', { description: response.error });
+          toast.error("Save Failed", { description: response.error });
         }
       } catch (e) {
-        toast.error('Save Error', { description: 'Could not connect to the server.' });
+        toast.error("Save Error", {
+          description: "Could not connect to the server.",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -101,32 +123,50 @@ export const HomePage: React.FC = () => {
     const Footer = isMobile ? DrawerFooter : DialogFooter;
     const Close = isMobile ? DrawerClose : DialogClose;
     return (
-      <Wrapper open={isProcessing || !!extractedData} onOpenChange={(open) => !open && setExtractedData(null)}>
-        <Content className={isMobile ? "" : "max-w-2xl"}>
-          <Header>
-            <Title>{isProcessing ? 'Analyzing Receipt...' : 'Review Expense'}</Title>
-            <Description>
-              {isProcessing ? 'Please wait while we extract the details from your receipt.' : 'Review and edit the extracted details before saving.'}
+      <Wrapper
+        open={isProcessing || !!extractedData}
+        onOpenChange={(open) => !open && setExtractedData(null)}
+      >
+        <Content className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}>
+          <Header className={isMobile ? "pb-2" : ""}>
+            <Title className="text-lg sm:text-xl">
+              {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
+            </Title>
+            <Description className="text-sm">
+              {isProcessing
+                ? "Please wait while we extract the details from your receipt."
+                : "Review and edit the extracted details before saving."}
             </Description>
           </Header>
           {isProcessing ? (
-            <div className="flex flex-col items-center justify-center h-64 space-y-4 px-4">
-              <Loader className="h-12 w-12 animate-spin text-focal-blue-500" />
-              <p className="text-muted-foreground">Our AI is hard at work...</p>
+            <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
+              <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Our AI is hard at work...
+              </p>
             </div>
           ) : (
             extractedData && (
-              <div className="px-4">
-                <ExpenseForm value={extractedData} onChange={setExtractedData} />
+              <div className="px-3 sm:px-4 overflow-y-auto">
+                <ExpenseForm
+                  value={extractedData}
+                  onChange={setExtractedData}
+                />
               </div>
             )
           )}
-          <Footer>
+          <Footer className={isMobile ? "pt-2 gap-2" : ""}>
             <Close asChild>
-              <Button variant="outline" disabled={isSaving}>Cancel</Button>
+              <Button variant="outline" disabled={isSaving}>
+                Cancel
+              </Button>
             </Close>
             <Button onClick={handleSave} disabled={isProcessing || isSaving}>
-              {isSaving ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {isSaving ? (
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Save Expense
             </Button>
           </Footer>
@@ -137,37 +177,38 @@ export const HomePage: React.FC = () => {
   return (
     <>
       <Toaster richColors position="top-center" />
-      <div className="relative flex-grow flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
+      <div className="relative flex-grow flex flex-col items-center justify-center bg-background text-foreground px-3 sm:px-4 py-8 overflow-hidden w-full">
         <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-neutral-950 dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)]"></div>
         <div className="absolute inset-0 bg-hero-gradient -z-10" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="text-center space-y-6 z-10"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="text-center space-y-4 sm:space-y-6 z-10 w-full max-w-4xl"
         >
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-balance leading-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-display font-bold text-balance leading-tight px-2">
             Scan, Review, Done.
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Instantly capture, analyze, and organize your expenses with a single photo. The fastest way to track your spending.
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto text-pretty px-2 sm:px-4">
+            Instantly capture, analyze, and organize your expenses with a single
+            photo. The fastest way to track your spending.
           </p>
-          <div className="flex justify-center items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
             <Button
               size="lg"
               onClick={() => setIsCameraOpen(true)}
-              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-10 py-6 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
             >
-              <Camera className="mr-3 h-6 w-6" />
+              <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Scan Receipt
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="px-10 py-6 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1"
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
             >
-              <Upload className="mr-3 h-6 w-6" />
+              <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Upload Photo
             </Button>
             <input
@@ -180,7 +221,11 @@ export const HomePage: React.FC = () => {
           </div>
         </motion.div>
         {error && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 max-w-md w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 sm:mt-8 max-w-md w-full px-4"
+          >
             <Alert variant="destructive">
               <AlertTitle>Processing Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -206,7 +251,10 @@ export const HomePage: React.FC = () => {
               />
               <div className="absolute bottom-4 left-4 right-4 bg-black/50 text-white p-3 rounded-lg text-sm flex items-center gap-3">
                 <Lightbulb className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>For best results: ensure good lighting and place the receipt on a flat, contrasting surface.</span>
+                <span>
+                  For best results: ensure good lighting and place the receipt
+                  on a flat, contrasting surface.
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-4 mt-6">

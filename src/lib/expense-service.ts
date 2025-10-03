@@ -1,6 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Expense, ExpenseData } from '../types';
 
+// Re-export ExpenseData for components
+export type { ExpenseData } from '../types';
+
 const EXPENSES_STORAGE_KEY = 'focal-expenses';
 const API_KEY_STORAGE_KEY = 'focal-api-key';
 const DEFAULT_CURRENCY_STORAGE_KEY = 'focal-default-currency';

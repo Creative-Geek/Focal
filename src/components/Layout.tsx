@@ -11,13 +11,13 @@ const Header: React.FC = () => {
     "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white";
   return (
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <NavLink to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
-              <ScanLine className="w-5 h-5 text-white dark:text-gray-900" />
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          <NavLink to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
+              <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 text-white dark:text-gray-900" />
             </div>
-            <h1 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-900 dark:text-white">
               Focal
             </h1>
           </NavLink>
@@ -87,7 +87,7 @@ const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
       location.pathname === path ? activeLinkClass : inactiveLinkClass
     );
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t h-16 z-40 flex items-center justify-around">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t h-16 z-40 flex items-center justify-around safe-area-inset-bottom">
       <NavLink to="/" className={getLinkClass("/")}>
         <Home className="h-6 w-6" />
         <span className="text-xs font-medium">Scan</span>
@@ -112,9 +112,9 @@ const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
 export const Layout: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
       <Header />
-      <main className="flex-grow pb-16 sm:pb-0">
+      <main className="flex-grow pb-20 sm:pb-0">
         <Outlet />
       </main>
       <Footer onSettingsClick={() => setIsSettingsOpen(true)} />

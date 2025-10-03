@@ -41,6 +41,7 @@ import {
   Search,
 } from "lucide-react";
 import { expenseService } from "@/lib/expense-service";
+// @ts-ignore
 import type { Expense } from "../../worker/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,10 +244,10 @@ export const ExpensesPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+        className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 md:py-12"
       >
-        <div className="space-y-8">
-          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white">
+        <div className="space-y-4 sm:space-y-6 md:space-y-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
             Expenses Dashboard
           </h1>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -259,13 +260,15 @@ export const ExpensesPage: React.FC = () => {
               />
             ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Spending Over Time</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  Spending Over Time
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-80">
+              <CardContent className="px-2 sm:px-6">
+                <div className="h-64 sm:h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -303,10 +306,12 @@ export const ExpensesPage: React.FC = () => {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Spending by Category</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  Spending by Category
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-80">
+              <CardContent className="px-2 sm:px-6">
+                <div className="h-64 sm:h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -337,12 +342,12 @@ export const ExpensesPage: React.FC = () => {
           </div>
           <div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               <Input
                 placeholder="Search by merchant or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full md:w-1/3"
+                className="pl-9 sm:pl-10 w-full md:w-1/2 lg:w-1/3 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -422,29 +427,33 @@ export const ExpensesPage: React.FC = () => {
             </CardContent>
           </Card>
           {/* Mobile Card List */}
-          <div className="md:hidden space-y-4">
-            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+          <div className="md:hidden space-y-3">
+            <h2 className="text-xl sm:text-2xl font-display font-bold text-gray-900 dark:text-white">
               Recent Transactions
             </h2>
             {filteredExpenses.map((expense) => (
               <Card key={expense.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{expense.merchant}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg truncate">
+                        {expense.merchant}
+                      </CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {new Date(expense.date).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant="outline">{expense.category}</Badge>
+                    <Badge variant="outline" className="text-xs shrink-0">
+                      {expense.category}
+                    </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-right">
+                <CardContent className="pb-3">
+                  <p className="text-xl sm:text-2xl font-bold text-right">
                     {formatCurrency(expense.total, expense.currency)}
                   </p>
                 </CardContent>
-                <CardFooter className="flex justify-end gap-2">
+                <CardFooter className="flex justify-end gap-2 pt-0">
                   <Button
                     variant="ghost"
                     size="sm"

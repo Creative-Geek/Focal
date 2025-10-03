@@ -32,3 +32,5 @@ bun.lockb
 .dev.vars*
 .env.*
 data/
+pnpm-lock.yaml
+pnpm-workspace.yaml
