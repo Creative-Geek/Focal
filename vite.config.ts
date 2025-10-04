@@ -89,8 +89,8 @@ export default ({ mode }: { mode: string }) => {
         registerType: "autoUpdate",
         manifestFilename: "site.webmanifest",
         includeAssets: [
-          // existing public assets to include
-          "vite.svg",
+          // include favicon or other static assets if needed
+          "focal-icon.svg",
         ],
         workbox: {
           navigateFallbackDenylist: [/^\/api\//],
@@ -112,13 +112,12 @@ export default ({ mode }: { mode: string }) => {
           icons: [
             { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
             { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
-            { src: "/pwa-maskable-192x192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-            { src: "/pwa-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+            { src: "/maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
         },
         devOptions: { enabled: true },
         pwaAssets: {
-          image: "public/vite.svg",
+          image: "public/focal-icon.svg",
         },
       }),
     ],

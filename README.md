@@ -154,7 +154,7 @@ git push origin main
 
 See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for detailed instructions.
 
-## � Install as a PWA
+## Install as a PWA
 
 Focal is installable as a Progressive Web App (PWA) on desktop and mobile.
 
@@ -192,7 +192,7 @@ Local testing:
 - [ ] Multi-currency support
 - [ ] Expense categories management
 - [ ] Budget tracking and alerts
-- [ ] Mobile app (React Native)
+- [x] ~~Mobile app (React Native)~~ PWA works wonders
 
 See [`TODO.md`](./TODO.md) for detailed development plan.
 
@@ -228,4 +228,4 @@ Built with ❤️ using React, Cloudflare Workers, and Google Gemini AI
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License.
