@@ -1,229 +1,439 @@
-# Focal: AI Receipt Scanner & Expense Tracker
+<div align="center">
+  <img src="public/focal-icon.svg" alt="Focal Logo" width="120" height="120" />
+  
+  # Focal Finance Tracker
 
-> **Live at:** [focal.creative-geek.tech](https://focal.creative-geek.tech)
+A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-powered receipt scanning. Built with React, TypeScript, and Cloudflare's edge infrastructure.
 
-A full-stack, AI-powered receipt scanner that instantly captures, analyzes, and organizes your expenses with a single photo. Built with React, Cloudflare Workers, D1 database, and Google Gemini AI.
+![Dashboard](images/dashboard.png)
 
-Focal is an elegant financial tracker designed for speed and simplicity. Snap a photo of any receipt, and AI automatically extracts merchant, total, date, and line items. Review the data in a clean interface, then save it to your personal cloud database. Access your expenses from any device with secure user authentication.
+</div>
 
-## ✨ Features
+## Features
 
-- 📸 **AI-Powered Scanning** - Camera-first interface for instant receipt capture
-- 🤖 **Smart Extraction** - Google Gemini AI extracts merchant, total, date, and line items
-- ✏️ **Review & Edit** - Clean dialog for verifying and correcting data
-- 💾 **Cloud Sync** - All expenses saved to Cloudflare D1 database
-- 🔐 **Secure Auth** - User accounts with JWT authentication
-- 📊 **Dashboard** - Visualize spending patterns with charts
-- 🌓 **Dark Mode** - Beautiful light and dark themes
-- 📱 **Responsive** - Flawless on desktop, tablet, and mobile
-- ⚡ **Edge Computing** - Fast, globally distributed on Cloudflare's network
+- 📸 **AI Receipt Scanning** - Extract expense details from receipt photos using Google Gemini 2.5 Flash
+- 💰 **Expense Management** - Track expenses with categories, amounts, and notes
+- 🔐 **Secure Authentication** - JWT-based auth with bcrypt password hashing
+- 🌓 **Dark/Light Theme** - Elegant UI with theme persistence
+- 📱 **Progressive Web App** - Install on mobile/desktop, works offline
+- 🔒 **End-to-End Security** - Encrypted API keys, secure token storage
+- ⚡ **Edge-First Architecture** - Deployed on Cloudflare's global network
 
-## 🚀 Quick Start
+## Tech Stack
 
-### Prerequisites
+### Frontend
 
-- Node.js 18+ and pnpm
-- Cloudflare account (free tier works)
-- Google Gemini API key ([get one here](https://makersuite.google.com/app/apikey))
+- **React 18** - Modern UI library with hooks
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool
+- **TailwindCSS** - Utility-first styling
+- **shadcn/ui** - Beautiful, accessible component library
+- **React Router 6** - Client-side routing
+- **React Query** - Server state management
+- **Zustand** - Lightweight state management
+- **React Hook Form + Zod** - Form handling and validation
 
-### Local Development
+### Backend
 
-1. **Clone and install:**
+- **Cloudflare Workers** - Serverless edge runtime
+- **Hono.js** - Lightweight web framework
+- **Cloudflare D1** - SQLite database at the edge
+- **Google Gemini API** - AI-powered receipt OCR
 
-   ```bash
-   git clone https://github.com/Creative-Geek/Focal.git
-   cd Focal
-   pnpm install
-   ```
+### Development
 
-2. **Login to Cloudflare:**
+- **ESLint** - Code linting
+- **TypeScript 5.8** - Type checking
+- **Wrangler** - Cloudflare CLI
+- **pnpm** - Fast, disk space efficient package manager
 
-   ```bash
-   pnpm wrangler login
-   ```
+## Prerequisites
 
-3. **Set up local database:**
+- **Node.js** 18+ (recommend LTS)
+- **pnpm** 8+ (`npm install -g pnpm`)
+- **Wrangler CLI** (`pnpm add -g wrangler`)
+- **Cloudflare account** (free tier available)
+- **Google AI Studio account** (for Gemini API key)
 
-   ```bash
-   pnpm db:migrate
-   ```
+## Getting Started
 
-4. **Start development servers:**
-
-   ```bash
-   pnpm dev:full
-   ```
-
-   Frontend: <http://localhost:3000>  
-   Backend: <http://localhost:8787>
-
-5. **Create account and add your Gemini API key in Settings**
-
-📖 **Detailed setup:** See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for production deployment guide.
-
-## Key Features
-
-- **AI-Powered Scanning:** Instantly capture receipt data using your device's camera.
-- **Automatic Data Extraction:** Leverages a vision-enabled LLM to extract merchant, total, date, and line items.
-- **Intuitive Review & Edit:** A clean dialog allows for quick verification and correction of extracted data.
-- **Session-Based Tracking:** All expenses are saved for your current session, providing a quick overview of recent spending.
-- **Minimalist Dashboard:** A clean, uncluttered interface to view and manage your expenses.
-- **Responsive Design:** Flawless experience on desktop, tablet, and mobile devices.
-- **Built on Cloudflare:** High-performance and scalable, running on the Cloudflare edge network.
-
-## 🛠️ Technology Stack
-
-**Frontend:**
-
-- React 18 + TypeScript 5.8 + Vite 6
-- Tailwind CSS + shadcn/ui
-- React Router DOM + Framer Motion
-- Recharts for data visualization
-- React Webcam for camera access
-
-**Backend:**
-
-- Cloudflare Workers (serverless API)
-- Hono.js (lightweight HTTP framework)
-- JWT authentication with bcrypt
-- D1 database (SQLite)
-
-**AI:**
-
-- Google Gemini 2.5 Flash
-- Server-side API key encryption
-- Structured JSON extraction
-
-**Infrastructure:**
-
-- Cloudflare Pages (automatic GitHub deployments)
-- Cloudflare D1 (persistent database)
-- Edge computing (low latency globally)
-
-## 📖 Usage
-
-1. **Sign Up** - Create an account at [focal.creative-geek.tech](https://focal.creative-geek.tech)
-2. **Add API Key** - Go to Settings and paste your Google Gemini API key
-3. **Scan Receipt** - Use camera or upload image
-4. **Review Data** - Check extracted merchant, total, date, items
-5. **Save** - Expense is stored in your cloud database
-6. **Track** - View all expenses in the dashboard with charts
-
-## 📁 Project Structure
-
-```
-Focal/
-├── src/                      # Frontend React application
-│   ├── pages/                # Main routes (HomePage, ExpensesPage, LoginPage)
-│   ├── components/           # React components + shadcn/ui
-│   ├── lib/                  # Core services (expense-service.ts)
-│   ├── hooks/                # Custom hooks (useAuth, useTheme)
-│   └── types.ts              # TypeScript interfaces
-├── worker/                   # Cloudflare Workers backend
-│   ├── handlers/             # API route handlers
-│   ├── middleware/           # Auth, CORS middleware
-│   ├── services/             # Business logic (auth, db, gemini)
-│   └── index.ts              # Worker entry point
-└── migrations/               # D1 database schema
-```
-
-## 🚢 Deployment
-
-The app auto-deploys to Cloudflare Pages on every push to main branch.
-
-**Production deployment:**
+### 1. Clone Repository
 
 ```bash
-# Set production secrets
-pnpm setup:prod
-
-# Deploy database schema
-pnpm db:migrate:prod
-
-# Push to GitHub (triggers auto-deploy)
-git push origin main
+git clone <repository-url>
+cd focal
+pnpm install
 ```
 
-**Custom domain setup:**
+### 2. Configure Environment
 
-1. Cloudflare Pages → Custom domains → Add `focal.creative-geek.tech`
-2. DNS: Add CNAME `focal` → `focal-finance-tracker.pages.dev`
-3. Wait 5-10 minutes for SSL provisioning
+Create `.dev.vars` in the project root:
 
-See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for detailed instructions.
+```bash
+JWT_SECRET="your-super-secret-jwt-key-min-32-chars"
+ENCRYPTION_KEY="your-encryption-key-min-32-chars"
+NODE_ENV="development"
+```
 
-## Install as a PWA
+Generate secure secrets:
 
-Focal is installable as a Progressive Web App (PWA) on desktop and mobile.
+```bash
+# Generate JWT secret
+openssl rand -base64 32
 
-- In Chrome/Edge, click the “Install app” icon in the address bar or use the browser menu → Install Focal.
-- On iOS Safari, tap Share → Add to Home Screen.
+# Generate encryption key
+openssl rand -base64 32
+```
 
-Notes:
+### 3. Set Up Database
 
-- The app uses a service worker with auto updates. New versions are applied after closing all tabs or on next launch.
-- API calls to `/api/*` are never cached; offline mode allows you to open the UI, but network actions require connectivity.
+```bash
+# Initialize local D1 database with schema
+pnpm db:migrate
 
-Local testing:
+# Apply quantity column migration
+pnpm db:migrate:002
+```
 
-1. Start the dev servers: `pnpm dev:full`
-2. Open <http://localhost:3000> and check Application → Manifest in DevTools. You should see “Installable”.
-3. To test production behavior, run `pnpm build` then `pnpm preview` and open the preview URL.
+### 4. Run Development Server
 
-## �🔐 Security
+```bash
+# Option 1: Run both frontend and backend
+pnpm dev:full
 
-- User passwords hashed with bcrypt
-- API keys encrypted at rest in D1 database
-- JWT authentication with httpOnly cookies (production)
-- Bearer token authentication (development)
-- CORS protection for trusted domains only
-- SQL injection prevention via D1 prepared statements
+# Option 2: Run separately
+# Terminal 1
+pnpm dev
 
-## 🎯 Roadmap
+# Terminal 2
+pnpm dev:worker
+```
 
-- [x] Full-stack migration to Cloudflare Workers + D1
-- [x] User authentication with JWT
-- [x] Encrypted API key storage
-- [x] Custom domain support
-- [ ] OAuth login (Google, GitHub)
-- [ ] Export expenses (CSV, PDF)
-- [ ] Multi-currency support
-- [ ] Expense categories management
-- [ ] Budget tracking and alerts
-- [x] ~~Mobile app (React Native)~~ PWA works wonders
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8787
 
-See [`TODO.md`](./TODO.md) for detailed development plan.
+### 5. Create Your First Account
 
-## 🤝 Contributing
+1. Navigate to http://localhost:3000/login
+2. Click "Register" and create an account
+3. Add your Google Gemini API key in Settings
+4. Start tracking expenses!
 
-Contributions are welcome! Please:
+## Screenshots
+
+<div align="center">
+  
+### Dashboard
+![Dashboard View](images/dashboard.png)
+*Track your expenses with beautiful visualizations and insights*
+
+### Home Page
+
+![Home Page](images/home_page.png)
+_Quick overview of your recent expenses and categories_
+
+### Add Expense
+
+![Add Expense](images/add_expense.png)
+_Easily add expenses manually or scan receipts with AI_
+
+</div>
+
+## Project Structure
+
+```
+focal/
+├── src/                      # Frontend source code
+│   ├── components/           # React components
+│   │   ├── ui/              # shadcn/ui components
+│   │   ├── AuthForm.tsx     # Login/register form
+│   │   ├── ExpenseForm.tsx  # Expense entry form
+│   │   ├── Layout.tsx       # App layout wrapper
+│   │   └── ...
+│   ├── contexts/            # React contexts
+│   │   └── AuthContext.tsx  # Authentication state
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utilities and services
+│   │   ├── expense-service.ts # Expense API client
+│   │   ├── errorReporter.ts   # Error handling
+│   │   └── utils.ts           # Helper functions
+│   ├── pages/               # Route pages
+│   │   ├── HomePage.tsx     # Dashboard
+│   │   ├── ExpensesPage.tsx # Expense list
+│   │   └── LoginPage.tsx    # Auth page
+│   ├── App.tsx              # Root component
+│   ├── main.tsx             # App entry point
+│   └── sw.ts                # Service worker
+├── worker/                  # Backend (Cloudflare Workers)
+│   ├── handlers/            # API route handlers
+│   │   ├── auth.handler.ts  # Login/register
+│   │   ├── expenses.handler.ts # CRUD operations
+│   │   ├── receipts.handler.ts # AI scanning
+│   │   └── apiKeys.handler.ts  # Key management
+│   ├── middleware/          # Middleware functions
+│   │   ├── auth.ts          # JWT verification
+│   │   └── cors.ts          # CORS headers
+│   ├── services/            # Business logic
+│   │   ├── auth.service.ts  # Authentication
+│   │   ├── db.service.ts    # Database queries
+│   │   ├── encryption.service.ts # API key encryption
+│   │   └── gemini.service.ts     # AI integration
+│   ├── index.ts             # Worker entry point
+│   └── router.ts            # API routes
+├── migrations/              # Database migrations
+│   ├── 001_initial_schema.sql
+│   └── 002_quantity_real.sql
+├── public/                  # Static assets
+├── functions/               # Cloudflare Pages Functions (if used)
+├── scripts/                 # Build/deployment scripts
+├── .gitignore              # Git ignore rules
+├── DEPLOYMENT.md           # Deployment guide
+├── package.json            # Dependencies and scripts
+├── vite.config.ts          # Vite configuration
+├── wrangler.toml           # Cloudflare Workers config
+└── tailwind.config.js      # TailwindCSS config
+```
+
+## Available Scripts
+
+```bash
+# Development
+pnpm dev              # Start frontend dev server (port 3000)
+pnpm dev:worker       # Start backend dev server (port 8787)
+pnpm dev:full         # Run both concurrently
+
+# Building
+pnpm build            # Build frontend for production
+pnpm preview          # Preview production build locally
+
+# Database
+pnpm db:migrate       # Run migrations (local)
+pnpm db:migrate:prod  # Run migrations (production)
+
+# Deployment
+pnpm deploy           # Deploy to Cloudflare (Workers + frontend)
+pnpm setup:prod       # Run production setup script
+
+# Code Quality
+pnpm lint             # Run ESLint
+```
+
+## Database Schema
+
+### Users Table
+
+```sql
+- id (TEXT PRIMARY KEY)
+- email (TEXT UNIQUE)
+- password (TEXT) -- bcrypt hashed
+- created_at (TIMESTAMP)
+```
+
+### Expenses Table
+
+```sql
+- id (TEXT PRIMARY KEY)
+- user_id (TEXT)
+- amount (REAL)
+- currency (TEXT)
+- quantity (REAL)
+- category (TEXT)
+- description (TEXT)
+- date (TEXT)
+- created_at (TIMESTAMP)
+```
+
+### API Keys Table
+
+```sql
+- id (TEXT PRIMARY KEY)
+- user_id (TEXT)
+- service (TEXT) -- e.g., 'gemini'
+- encrypted_key (TEXT)
+- created_at (TIMESTAMP)
+```
+
+## API Endpoints
+
+### Authentication
+
+- `POST /api/auth/register` - Create new account
+- `POST /api/auth/login` - Login with credentials
+
+### Expenses
+
+- `GET /api/expenses` - List user's expenses
+- `POST /api/expenses` - Create new expense
+- `PUT /api/expenses/:id` - Update expense
+- `DELETE /api/expenses/:id` - Delete expense
+
+### Receipt Scanning
+
+- `POST /api/receipts/scan` - Scan receipt image with AI
+
+### API Keys
+
+- `GET /api/api-keys/:service` - Check if key exists
+- `POST /api/api-keys` - Store encrypted API key
+- `PUT /api/api-keys/:service` - Update API key
+- `DELETE /api/api-keys/:service` - Remove API key
+
+## Environment Variables
+
+### Development (`.dev.vars`)
+
+```bash
+JWT_SECRET="your-jwt-secret-32-chars-minimum"
+ENCRYPTION_KEY="your-encryption-key-32-chars-minimum"
+NODE_ENV="development"
+```
+
+### Production (Cloudflare Secrets)
+
+```bash
+# Set via Wrangler CLI
+wrangler secret put JWT_SECRET
+wrangler secret put ENCRYPTION_KEY
+```
+
+See `wrangler.toml` for additional configuration.
+
+## Deployment
+
+Deploy to Cloudflare Pages + Workers. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+Quick deploy:
+
+```bash
+# Set production secrets (one-time)
+wrangler secret put JWT_SECRET
+wrangler secret put ENCRYPTION_KEY
+
+# Run migrations
+pnpm db:migrate:prod
+pnpm db:migrate:002:prod
+
+# Deploy
+pnpm deploy
+```
+
+Your app will be available at:
+
+- **Default**: `https://<your-project>.pages.dev`
+- **Custom domain**: `https://app.yourdomain.com` (after DNS setup)
+
+## Security Features
+
+- 🔐 **Password Hashing** - bcrypt with salt rounds
+- 🎫 **JWT Authentication** - Secure token-based auth
+- 🔒 **API Key Encryption** - AES-256-GCM encryption for stored keys
+- 🛡️ **SQL Injection Protection** - Prepared statements via D1
+- 🌐 **CORS Protection** - Configurable allowed origins
+- 🔑 **Secure Headers** - Security headers on all responses
+- 📝 **Input Validation** - Zod schemas for request validation
+
+## Browser Support
+
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
+- Opera 76+
+
+PWA features require HTTPS (included with Cloudflare).
+
+## Development Tips
+
+### Hot Module Replacement (HMR)
+
+Vite provides instant HMR during development. Changes reflect immediately without full reload.
+
+### Type Safety
+
+Run TypeScript type checking:
+
+```bash
+npx tsc --noEmit
+```
+
+### Database Inspection
+
+```bash
+# Local database
+wrangler d1 execute focal_expensi_db --local --command="SELECT * FROM expenses"
+
+# Production database
+wrangler d1 execute focal_expensi_db --remote --command="SELECT * FROM users"
+```
+
+### Viewing Logs
+
+```bash
+# Stream production logs
+wrangler tail
+
+# Stream with filters
+wrangler tail --status error
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+```bash
+# Frontend port 3000 in use
+pnpm dev -- --port 3001
+
+# Backend port 8787 in use
+pnpm dev:worker --port 8788
+```
+
+### Database Issues
+
+```bash
+# Reset local database
+rm -rf .wrangler/state
+pnpm db:migrate
+pnpm db:migrate:002
+```
+
+### Build Errors
+
+```bash
+# Clear cache and rebuild
+rm -rf node_modules dist .wrangler
+pnpm install
+pnpm build
+```
+
+### API Key Not Working
+
+- Ensure key is valid in Google AI Studio
+- Check encryption key is set correctly
+- Verify key is stored (check Settings dialog)
+
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'feat: add amazing feature'`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
-MIT License - see [`LICENSE`](./LICENSE) file for details.
+This project is private and proprietary.
 
-## 🙏 Acknowledgments
+## Support
 
-- [shadcn/ui](https://ui.shadcn.com/) for beautiful components
-- [Google Gemini](https://ai.google.dev/) for AI capabilities
-- [Cloudflare](https://cloudflare.com/) for infrastructure
-- [Hono](https://hono.dev/) for elegant API framework
+For deployment issues, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
-## 📧 Contact
+## Acknowledgments
 
-**Project Link:** [github.com/Creative-Geek/Focal](https://github.com/Creative-Geek/Focal)  
-**Live Demo:** [focal.creative-geek.tech](https://focal.creative-geek.tech)
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful component library
+- [Cloudflare](https://cloudflare.com/) - Edge infrastructure
+- [Google Gemini](https://ai.google.dev/) - AI receipt scanning
+- [Hono](https://hono.dev/) - Web framework
 
 ---
 
-Built with ❤️ using React, Cloudflare Workers, and Google Gemini AI
-
-## License
-
-This project is licensed under the MIT License.
+Built with ❤️ using React, TypeScript, and Cloudflare Workers
