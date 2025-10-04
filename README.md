@@ -124,9 +124,7 @@ Focal/
 │   ├── middleware/           # Auth, CORS middleware
 │   ├── services/             # Business logic (auth, db, gemini)
 │   └── index.ts              # Worker entry point
-├── migrations/               # D1 database schema
-├── DEPLOYMENT.md            # Production deployment guide
-└── TODO.md                  # Development roadmap
+└── migrations/               # D1 database schema
 ```
 
 ## 🚢 Deployment
