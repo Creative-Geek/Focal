@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Settings, Home, Wallet } from "lucide-react";
+import { Settings, Home, Wallet, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SettingsDialog } from "./SettingsDialog";
@@ -51,6 +51,21 @@ const Header: React.FC = () => {
             </NavLink>
           </nav>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="hover:bg-accent"
+            >
+              <a
+                href="https://github.com/Creative-Geek/Focal"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View on GitHub"
+              >
+                <Github className="h-5 w-5" />
+              </a>
+            </Button>
             <ThemeToggle className="relative top-0 right-0" />
             <UserMenu />
           </div>
