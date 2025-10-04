@@ -5,10 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 
 # Serve frontend assets (production only)
 # For local development, Vite serves the frontend on port 3000
-# Uncomment for production builds:
-# [assets]
-# directory = "./dist"
-# binding = "ASSETS"
+[assets]
+directory = "./dist"
+binding = "ASSETS"
 
 # D1 Database binding
 [[d1_databases]]
