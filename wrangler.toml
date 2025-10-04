@@ -1,4 +1,4 @@
-name = "focal-finance-tracker"
+name = "focal-expensi"
 compatibility_date = "2025-10-04"
 
 # Static site configuration - deploy dist folder as assets
