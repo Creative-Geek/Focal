@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExpenseForm } from "@/components/ExpenseForm";
+import { resizeImage } from "@/lib/utils";
 const videoConstraints = {
   width: 1280,
   height: 720,
@@ -48,7 +49,10 @@ export const HomePage: React.FC = () => {
     setIsProcessing(true);
     setError(null);
     try {
-      const response = await expenseService.processReceipt(base64Image);
+      // Resize image to max 1200x1200 before sending to API
+      const resizedImage = await resizeImage(base64Image, 1200);
+
+      const response = await expenseService.processReceipt(resizedImage);
       if (response.success && response.data) {
         setExtractedData({
           ...response.data,
