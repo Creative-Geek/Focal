@@ -69,15 +69,7 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
       }
     }
   };
-  const FormContent = () => (
-    <>
-      {editedData && (
-        <div className="px-4">
-          <ExpenseForm value={editedData} onChange={setEditedData} />
-        </div>
-      )}
-    </>
-  );
+
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -89,7 +81,11 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
               done.
             </DrawerDescription>
           </DrawerHeader>
-          <FormContent />
+          {editedData && (
+            <div className="px-4">
+              <ExpenseForm value={editedData} onChange={setEditedData} />
+            </div>
+          )}
           <DrawerFooter>
             <DrawerClose asChild>
               <Button variant="outline" disabled={isSaving}>
@@ -119,7 +115,11 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
             done.
           </DialogDescription>
         </DialogHeader>
-        <FormContent />
+        {editedData && (
+          <div className="px-4">
+            <ExpenseForm value={editedData} onChange={setEditedData} />
+          </div>
+        )}
         <DialogFooter>
           <Button
             variant="outline"

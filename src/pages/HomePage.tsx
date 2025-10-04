@@ -1,7 +1,15 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, X, Loader, Save, Lightbulb, Upload } from "lucide-react";
+import {
+  Camera,
+  X,
+  Loader,
+  Save,
+  Lightbulb,
+  Upload,
+  PenLine,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +42,97 @@ const videoConstraints = {
   height: 720,
   facingMode: "environment",
 };
+
+// Hoisted to keep identity stable and avoid remount/focus loss
+function ReviewForm(props: {
+  isMobile: boolean;
+  isProcessing: boolean;
+  isSaving: boolean;
+  extractedData: ExpenseData | null;
+  setExtractedData: (data: ExpenseData | null) => void;
+  handleSave: () => void;
+}) {
+  const {
+    isMobile,
+    isProcessing,
+    isSaving,
+    extractedData,
+    setExtractedData,
+    handleSave,
+  } = props;
+  const Wrapper = isMobile ? Drawer : Dialog;
+  const Content = isMobile ? DrawerContent : DialogContent;
+  const Header = isMobile ? DrawerHeader : DialogHeader;
+  const Title = isMobile ? DrawerTitle : DialogTitle;
+  const Description = isMobile ? DrawerDescription : DialogDescription;
+  const Footer = isMobile ? DrawerFooter : DialogFooter;
+  const Close = isMobile ? DrawerClose : DialogClose;
+  return (
+    <Wrapper
+      open={isProcessing || !!extractedData}
+      onOpenChange={(open) => {
+        if (!open && !isSaving) {
+          setExtractedData(null);
+        }
+      }}
+    >
+      <Content
+        className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
+        onPointerDownOutside={(e) => {
+          if (isSaving) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (isSaving) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <Header className={isMobile ? "pb-2" : ""}>
+          <Title className="text-lg sm:text-xl">
+            {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
+          </Title>
+          <Description className="text-sm">
+            {isProcessing
+              ? "Please wait while we extract the details from your receipt."
+              : "Review and edit the extracted details before saving."}
+          </Description>
+        </Header>
+        {isProcessing ? (
+          <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
+            <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Our AI is hard at work...
+            </p>
+          </div>
+        ) : (
+          extractedData && (
+            <div className="px-3 sm:px-4 overflow-y-auto">
+              <ExpenseForm value={extractedData} onChange={setExtractedData} />
+            </div>
+          )
+        )}
+        <Footer className={isMobile ? "pt-2 gap-2" : ""}>
+          <Close asChild>
+            <Button variant="outline" disabled={isSaving}>
+              Cancel
+            </Button>
+          </Close>
+          <Button onClick={handleSave} disabled={isProcessing || isSaving}>
+            {isSaving ? (
+              <Loader className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Save Expense
+          </Button>
+        </Footer>
+      </Content>
+    </Wrapper>
+  );
+}
+
 export const HomePage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,10 +140,36 @@ export const HomePage: React.FC = () => {
   const [extractedData, setExtractedData] = useState<ExpenseData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const fetchUserCurrency = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/settings/currency", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data?.defaultCurrency) {
+          setDefaultCurrency(data.data.defaultCurrency);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch default currency:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserCurrency();
+  }, []);
+
   const handleImageProcessing = async (base64Image: string) => {
     setIsProcessing(true);
     setError(null);
@@ -94,6 +219,19 @@ export const HomePage: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleManualEntry = () => {
+    // Open the review form with default/empty expense data
+    const today = new Date().toISOString().split("T")[0];
+    setExtractedData({
+      merchant: "",
+      date: today,
+      total: 0,
+      currency: defaultCurrency,
+      category: "Other",
+      lineItems: [{ description: "", quantity: 1, price: 0 }],
+    });
+  };
   const handleSave = async () => {
     if (extractedData && !isSaving) {
       setIsSaving(true);
@@ -103,8 +241,10 @@ export const HomePage: React.FC = () => {
           toast.success("Expense Saved!", {
             description: `${extractedData.merchant} for ${extractedData.total} has been added.`,
           });
-          // Navigate immediately while keeping modal open
-          // Don't clear extractedData or isSaving to prevent modal close/reopen
+          // Clear state first, then navigate
+          setExtractedData(null);
+          setIsSaving(false);
+          // Navigate after state is cleared
           navigate("/expenses");
         } else {
           toast.error("Save Failed", { description: response.error });
@@ -118,85 +258,7 @@ export const HomePage: React.FC = () => {
       }
     }
   };
-  const ReviewForm = ({ isMobile }: { isMobile: boolean }) => {
-    const Wrapper = isMobile ? Drawer : Dialog;
-    const Content = isMobile ? DrawerContent : DialogContent;
-    const Header = isMobile ? DrawerHeader : DialogHeader;
-    const Title = isMobile ? DrawerTitle : DialogTitle;
-    const Description = isMobile ? DrawerDescription : DialogDescription;
-    const Footer = isMobile ? DrawerFooter : DialogFooter;
-    const Close = isMobile ? DrawerClose : DialogClose;
-    return (
-      <Wrapper
-        open={isProcessing || !!extractedData}
-        onOpenChange={(open) => {
-          // Prevent closing while saving
-          if (!open && !isSaving) {
-            setExtractedData(null);
-          }
-        }}
-      >
-        <Content
-          className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
-          onPointerDownOutside={(e) => {
-            // Prevent closing while saving
-            if (isSaving) {
-              e.preventDefault();
-            }
-          }}
-          onInteractOutside={(e) => {
-            // Prevent closing while saving
-            if (isSaving) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <Header className={isMobile ? "pb-2" : ""}>
-            <Title className="text-lg sm:text-xl">
-              {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
-            </Title>
-            <Description className="text-sm">
-              {isProcessing
-                ? "Please wait while we extract the details from your receipt."
-                : "Review and edit the extracted details before saving."}
-            </Description>
-          </Header>
-          {isProcessing ? (
-            <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
-              <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Our AI is hard at work...
-              </p>
-            </div>
-          ) : (
-            extractedData && (
-              <div className="px-3 sm:px-4 overflow-y-auto">
-                <ExpenseForm
-                  value={extractedData}
-                  onChange={setExtractedData}
-                />
-              </div>
-            )
-          )}
-          <Footer className={isMobile ? "pt-2 gap-2" : ""}>
-            <Close asChild>
-              <Button variant="outline" disabled={isSaving}>
-                Cancel
-              </Button>
-            </Close>
-            <Button onClick={handleSave} disabled={isProcessing || isSaving}>
-              {isSaving ? (
-                <Loader className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Expense
-            </Button>
-          </Footer>
-        </Content>
-      </Wrapper>
-    );
-  };
+
   return (
     <>
       <Toaster richColors position="top-center" />
@@ -233,6 +295,15 @@ export const HomePage: React.FC = () => {
             >
               <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Upload Photo
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleManualEntry}
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+            >
+              <PenLine className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+              Manual Entry
             </Button>
             <input
               type="file"
@@ -299,11 +370,19 @@ export const HomePage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <ReviewForm isMobile={isMobile} />
+      <ReviewForm
+        isMobile={isMobile}
+        isProcessing={isProcessing}
+        isSaving={isSaving}
+        extractedData={extractedData}
+        setExtractedData={setExtractedData}
+        handleSave={handleSave}
+      />
       <SettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         onSave={() => {
+          fetchUserCurrency();
           // Refresh can be handled here if needed
           // For now, the API key will be available immediately for next processing
           toast.success("Ready to scan", {

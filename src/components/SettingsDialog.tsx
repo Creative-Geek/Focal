@@ -175,7 +175,11 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 <div className="col-span-3 space-y-2">
                   <Input
                     id="api-key"
-                    type="password"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoCapitalize="none"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder={
