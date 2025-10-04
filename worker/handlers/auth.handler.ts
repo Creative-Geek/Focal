@@ -52,11 +52,18 @@ export async function signup(c: Context<{ Bindings: Env }>) {
     const expiresAt = authService.getTokenExpiration();
     await dbService.createSession(sessionId, user.id, token, expiresAt);
 
-    // Set httpOnly cookie
-    c.header(
-        'Set-Cookie',
-        `auth_token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`
-    );
+    // Set httpOnly cookie (use Secure only in production)
+    const isDev = env.NODE_ENV === 'development';
+    const cookieFlags = isDev
+        ? `HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`
+        : `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`;
+    const cookieValue = `auth_token=${token}; ${cookieFlags}`;
+
+    if (isDev) {
+        console.log('[Signup] Setting cookie:', cookieValue.substring(0, 60) + '...');
+    }
+
+    c.header('Set-Cookie', cookieValue);
 
     return json(
         success({
@@ -110,11 +117,18 @@ export async function login(c: Context<{ Bindings: Env }>) {
     const expiresAt = authService.getTokenExpiration();
     await dbService.createSession(sessionId, user.id, token, expiresAt);
 
-    // Set httpOnly cookie
-    c.header(
-        'Set-Cookie',
-        `auth_token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`
-    );
+    // Set httpOnly cookie (use Secure only in production)
+    const isDev = env.NODE_ENV === 'development';
+    const cookieFlags = isDev
+        ? `HttpOnly; SameSite=Lax; Path=/; Max-Age=${7 * 24 * 60 * 60}`
+        : `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`;
+    const cookieValue = `auth_token=${token}; ${cookieFlags}`;
+
+    if (isDev) {
+        console.log('[Login] Setting cookie:', cookieValue.substring(0, 60) + '...');
+    }
+
+    c.header('Set-Cookie', cookieValue);
 
     return json(
         success({
@@ -139,8 +153,12 @@ export async function logout(c: Context<{ Bindings: Env; Variables: Variables }>
     // Delete session
     await dbService.deleteSession(token);
 
-    // Clear cookie
-    c.header('Set-Cookie', 'auth_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0');
+    // Clear cookie (match the same flags used when setting)
+    const isDev = env.NODE_ENV === 'development';
+    const cookieFlags = isDev
+        ? `HttpOnly; SameSite=Lax; Path=/; Max-Age=0`
+        : `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
+    c.header('Set-Cookie', `auth_token=; ${cookieFlags}`);
 
     return json(success({ message: 'Logged out successfully' }));
 }

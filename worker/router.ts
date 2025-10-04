@@ -5,6 +5,7 @@ import * as authHandler from './handlers/auth.handler';
 import * as expensesHandler from './handlers/expenses.handler';
 import * as apiKeysHandler from './handlers/apiKeys.handler';
 import * as receiptsHandler from './handlers/receipts.handler';
+import * as errorsHandler from './handlers/errors.handler';
 
 /**
  * API Router for Focal Finance Tracker
@@ -34,6 +35,9 @@ export function createRouter() {
     app.delete('/settings/api-key', authMiddleware, apiKeysHandler.deleteApiKey);
     app.get('/settings/currency', authMiddleware, apiKeysHandler.getCurrency);
     app.put('/settings/currency', authMiddleware, apiKeysHandler.updateCurrency);
+
+    // ============ ERROR LOGGING ROUTES ============
+    app.post('/client-errors', errorsHandler.logClientError);
 
     return app;
 }

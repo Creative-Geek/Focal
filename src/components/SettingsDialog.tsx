@@ -23,14 +23,28 @@ import {
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "EGP", "SAR"];
 const API_BASE_URL = "/api";
 
+// Helper to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem("auth_token");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSave?: () => void; // Callback after successful save
 }
 
 export const SettingsDialog: React.FC<SettingsDialogProps> = ({
   open,
   onOpenChange,
+  onSave,
 }) => {
   const [apiKey, setApiKey] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -49,8 +63,14 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
     try {
       // Fetch API key status and currency
       const [keyResponse, currencyResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/settings/api-key`, { credentials: "include" }),
-        fetch(`${API_BASE_URL}/settings/currency`, { credentials: "include" }),
+        fetch(`${API_BASE_URL}/settings/api-key`, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        }),
+        fetch(`${API_BASE_URL}/settings/currency`, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        }),
       ]);
 
       if (keyResponse.ok) {
@@ -82,7 +102,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
         requests.push(
           fetch(`${API_BASE_URL}/settings/api-key`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             credentials: "include",
             body: JSON.stringify({
               apiKey: apiKey.trim(),
@@ -95,7 +115,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
         requests.push(
           fetch(`${API_BASE_URL}/settings/currency`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             credentials: "include",
             body: JSON.stringify({ defaultCurrency: currency }),
           })
@@ -113,6 +133,11 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           setApiKey(""); // Clear the input
           setHasExistingKey(true);
           onOpenChange(false);
+
+          // Trigger refresh callback if provided
+          if (onSave) {
+            onSave();
+          }
         } else {
           throw new Error("Failed to save settings");
         }

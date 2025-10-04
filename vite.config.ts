@@ -102,6 +102,18 @@ export default ({ mode }: { mode: string }) => {
         '/api': {
           target: 'http://localhost:8787',
           changeOrigin: true,
+          secure: false,
+          ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              // Forward cookies from the backend to the frontend
+              const setCookieHeader = proxyRes.headers['set-cookie'];
+              if (setCookieHeader) {
+                // Ensure cookies work across the proxy
+                proxyRes.headers['set-cookie'] = setCookieHeader;
+              }
+            });
+          },
         },
       },
     },

@@ -11,6 +11,18 @@ export interface LineItem {
   price: number;
 }
 
+// Helper to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('auth_token');
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 class ExpenseService {
   /**
    * Process a receipt image using the backend API (with user's encrypted API key)
@@ -19,9 +31,7 @@ class ExpenseService {
     try {
       const response = await fetch(`${API_BASE_URL}/receipts/process`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({ image: base64Image }),
       });
@@ -52,9 +62,7 @@ class ExpenseService {
     try {
       const response = await fetch(`${API_BASE_URL}/expenses`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(expenseData),
       });
@@ -81,6 +89,7 @@ class ExpenseService {
   async getExpenses(): Promise<{ success: boolean; data?: Expense[]; error?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/expenses`, {
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
 
@@ -107,6 +116,7 @@ class ExpenseService {
     try {
       const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
 
@@ -133,9 +143,7 @@ class ExpenseService {
     try {
       const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(updatedData),
       });

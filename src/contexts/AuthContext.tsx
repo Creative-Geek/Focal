@@ -26,9 +26,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("auth_token");
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
   const checkAuth = async () => {
     try {
       const response = await fetch("/api/auth/me", {
+        headers: getAuthHeaders(),
         credentials: "include",
       });
 
@@ -38,13 +51,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(data.data);
         } else {
           setUser(null);
+          localStorage.removeItem("auth_token");
         }
       } else {
         setUser(null);
+        localStorage.removeItem("auth_token");
       }
     } catch (error) {
       console.error("Auth check failed:", error);
       setUser(null);
+      localStorage.removeItem("auth_token");
     } finally {
       setLoading(false);
     }
@@ -68,6 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (data.success) {
+        // Store token in localStorage for Bearer authentication
+        if (data.data.token) {
+          localStorage.setItem("auth_token", data.data.token);
+        }
         setUser(data.data.user);
         return { success: true };
       } else {
@@ -92,6 +112,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (data.success) {
+        // Store token in localStorage for Bearer authentication
+        if (data.data.token) {
+          localStorage.setItem("auth_token", data.data.token);
+        }
         setUser(data.data.user);
         return { success: true };
       } else {
@@ -106,11 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        headers: getAuthHeaders(),
         credentials: "include",
       });
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
+      localStorage.removeItem("auth_token");
       setUser(null);
     }
   };

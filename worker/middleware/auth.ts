@@ -30,6 +30,13 @@ export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Vari
     // Fall back to cookie
     if (!token) {
         const cookieHeader = c.req.header('Cookie');
+
+        // Debug logging in development
+        if (env.NODE_ENV === 'development') {
+            console.log('[Auth Debug] Cookie header:', cookieHeader);
+            console.log('[Auth Debug] All headers:', Object.fromEntries(c.req.raw.headers.entries()));
+        }
+
         if (cookieHeader) {
             const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
                 const [key, value] = cookie.trim().split('=');
@@ -37,6 +44,11 @@ export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Vari
                 return acc;
             }, {} as Record<string, string>);
             token = cookies['auth_token'];
+
+            if (env.NODE_ENV === 'development') {
+                console.log('[Auth Debug] Parsed cookies:', cookies);
+                console.log('[Auth Debug] Token found:', !!token);
+            }
         }
     }
 

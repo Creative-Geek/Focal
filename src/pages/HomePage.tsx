@@ -276,7 +276,18 @@ export const HomePage: React.FC = () => {
         )}
       </AnimatePresence>
       <ReviewForm isMobile={isMobile} />
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <SettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        onSave={() => {
+          // Refresh can be handled here if needed
+          // For now, the API key will be available immediately for next processing
+          toast.success("Ready to scan", {
+            description:
+              "Your API key is configured. You can now scan receipts.",
+          });
+        }}
+      />
     </>
   );
 };
