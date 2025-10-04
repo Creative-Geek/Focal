@@ -54,9 +54,9 @@ export const HomePage: React.FC = () => {
 
       const response = await expenseService.processReceipt(resizedImage);
       if (response.success && response.data) {
+        // Currency is now always provided by the backend from user settings
         setExtractedData({
           ...response.data,
-          currency: response.data.currency || "USD",
           lineItems: response.data.lineItems || [],
         });
       } else {
@@ -95,7 +95,7 @@ export const HomePage: React.FC = () => {
     }
   };
   const handleSave = async () => {
-    if (extractedData) {
+    if (extractedData && !isSaving) {
       setIsSaving(true);
       try {
         const response = await expenseService.saveExpense(extractedData);
@@ -103,16 +103,17 @@ export const HomePage: React.FC = () => {
           toast.success("Expense Saved!", {
             description: `${extractedData.merchant} for ${extractedData.total} has been added.`,
           });
-          setExtractedData(null);
+          // Navigate immediately while keeping modal open
+          // Don't clear extractedData or isSaving to prevent modal close/reopen
           navigate("/expenses");
         } else {
           toast.error("Save Failed", { description: response.error });
+          setIsSaving(false);
         }
       } catch (e) {
         toast.error("Save Error", {
           description: "Could not connect to the server.",
         });
-      } finally {
         setIsSaving(false);
       }
     }
@@ -128,9 +129,28 @@ export const HomePage: React.FC = () => {
     return (
       <Wrapper
         open={isProcessing || !!extractedData}
-        onOpenChange={(open) => !open && setExtractedData(null)}
+        onOpenChange={(open) => {
+          // Prevent closing while saving
+          if (!open && !isSaving) {
+            setExtractedData(null);
+          }
+        }}
       >
-        <Content className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}>
+        <Content
+          className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
+          onPointerDownOutside={(e) => {
+            // Prevent closing while saving
+            if (isSaving) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            // Prevent closing while saving
+            if (isSaving) {
+              e.preventDefault();
+            }
+          }}
+        >
           <Header className={isMobile ? "pb-2" : ""}>
             <Title className="text-lg sm:text-xl">
               {isProcessing ? "Analyzing Receipt..." : "Review Expense"}

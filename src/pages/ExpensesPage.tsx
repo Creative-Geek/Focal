@@ -41,8 +41,7 @@ import {
   Search,
 } from "lucide-react";
 import { expenseService } from "@/lib/expense-service";
-// @ts-ignore
-import type { Expense } from "../../worker/types";
+import type { Expense } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -109,6 +108,29 @@ export const ExpensesPage: React.FC = () => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
+
+  const fetchUserSettings = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/settings/currency", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data?.defaultCurrency) {
+          setDefaultCurrency(data.data.defaultCurrency);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch default currency:", error);
+    }
+  };
+
   const fetchExpenses = async () => {
     setLoading(true);
     setError(null);
@@ -125,7 +147,9 @@ export const ExpensesPage: React.FC = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
+    fetchUserSettings();
     fetchExpenses();
   }, []);
   const filteredExpenses = useMemo(() => {
@@ -165,7 +189,7 @@ export const ExpensesPage: React.FC = () => {
   const stats = [
     {
       title: "Total Spent",
-      value: formatCurrency(totalSpent),
+      value: formatCurrency(totalSpent, defaultCurrency),
       icon: <Wallet className="h-4 w-4 text-muted-foreground" />,
     },
     {
@@ -175,7 +199,7 @@ export const ExpensesPage: React.FC = () => {
     },
     {
       title: "Average Transaction",
-      value: formatCurrency(averageTransaction),
+      value: formatCurrency(averageTransaction, defaultCurrency),
       icon: <Tag className="h-4 w-4 text-muted-foreground" />,
     },
   ];
@@ -243,7 +267,7 @@ export const ExpensesPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 md:py-12"
       >
         <div className="space-y-4 sm:space-y-6 md:space-y-8">
@@ -331,7 +355,9 @@ export const ExpensesPage: React.FC = () => {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value: number) =>
+                          formatCurrency(value, defaultCurrency)
+                        }
                       />
                       <Legend iconSize={10} />
                     </PieChart>

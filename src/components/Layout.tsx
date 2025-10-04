@@ -115,6 +115,12 @@ const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
 };
 export const Layout: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const handleSettingsSave = () => {
+    // Settings saved - no need to refresh expenses here
+    // Each page will handle its own data fetching
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
       <Header />
@@ -123,7 +129,11 @@ export const Layout: React.FC = () => {
       </main>
       <Footer onSettingsClick={() => setIsSettingsOpen(true)} />
       <BottomNav onSettingsClick={() => setIsSettingsOpen(true)} />
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <SettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        onSave={handleSettingsSave}
+      />
     </div>
   );
 };

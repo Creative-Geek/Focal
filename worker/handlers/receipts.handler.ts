@@ -50,5 +50,11 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         return error(result.error || 'Failed to process receipt', 500);
     }
 
-    return json(success(result.data));
+    // Add user's default currency to the response
+    const expenseData = {
+        ...result.data,
+        currency: apiKeyRecord.default_currency || 'USD',
+    };
+
+    return json(success(expenseData));
 }

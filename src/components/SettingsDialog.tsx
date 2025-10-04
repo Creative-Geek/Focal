@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CAD", "EGP", "SAR"];
+const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
 const API_BASE_URL = "/api";
 
 // Helper to get auth headers

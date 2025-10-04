@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,29 +12,49 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   value,
   onChange,
 }) => {
-  const handleFieldChange = (field: keyof ExpenseData, fieldValue: any) => {
-    onChange({ ...value, [field]: fieldValue });
-  };
-  const handleLineItemChange = (
-    index: number,
-    field: "description" | "quantity" | "price",
-    fieldValue: string | number
-  ) => {
-    const newLineItems = [...value.lineItems];
-    newLineItems[index] = { ...newLineItems[index], [field]: fieldValue };
-    onChange({ ...value, lineItems: newLineItems });
-  };
-  const addLineItem = () => {
+  // Use refs to keep stable references to latest value and onChange
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+  }, [value, onChange]);
+
+  const handleFieldChange = useCallback(
+    (field: keyof ExpenseData, fieldValue: any) => {
+      onChangeRef.current({ ...valueRef.current, [field]: fieldValue });
+    },
+    []
+  );
+
+  const handleLineItemChange = useCallback(
+    (
+      index: number,
+      field: "description" | "quantity" | "price",
+      fieldValue: string | number
+    ) => {
+      const newLineItems = [...valueRef.current.lineItems];
+      newLineItems[index] = { ...newLineItems[index], [field]: fieldValue };
+      onChangeRef.current({ ...valueRef.current, lineItems: newLineItems });
+    },
+    []
+  );
+
+  const addLineItem = useCallback(() => {
     const newLineItems = [
-      ...value.lineItems,
+      ...valueRef.current.lineItems,
       { description: "", quantity: 1, price: 0 },
     ];
-    onChange({ ...value, lineItems: newLineItems });
-  };
-  const removeLineItem = (index: number) => {
-    const newLineItems = value.lineItems.filter((_, i) => i !== index);
-    onChange({ ...value, lineItems: newLineItems });
-  };
+    onChangeRef.current({ ...valueRef.current, lineItems: newLineItems });
+  }, []);
+
+  const removeLineItem = useCallback((index: number) => {
+    const newLineItems = valueRef.current.lineItems.filter(
+      (_, i) => i !== index
+    );
+    onChangeRef.current({ ...valueRef.current, lineItems: newLineItems });
+  }, []);
   return (
     <div className="space-y-3 sm:space-y-4 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto px-1 sm:pr-2 py-2 sm:py-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

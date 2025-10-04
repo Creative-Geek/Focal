@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 /**
  * Google Gemini AI service for receipt processing
@@ -9,40 +9,78 @@ export class GeminiService {
      */
     async processReceipt(apiKey: string, base64Image: string): Promise<any> {
         const genAI = new GoogleGenerativeAI(apiKey);
+
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-exp',
+            model: 'gemini-2.5-flash',
             generationConfig: {
                 responseMimeType: 'application/json',
+                responseSchema: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        merchant: {
+                            type: SchemaType.STRING,
+                            description: 'Store or restaurant name',
+                            nullable: false,
+                        },
+                        date: {
+                            type: SchemaType.STRING,
+                            description: 'Transaction date in YYYY-MM-DD format',
+                            nullable: false,
+                        },
+                        total: {
+                            type: SchemaType.NUMBER,
+                            description: 'Total amount (number only, no currency symbols)',
+                            nullable: false,
+                        },
+                        category: {
+                            type: SchemaType.STRING,
+                            description: 'Expense category (Food & Drink, Groceries, Travel, Shopping, Utilities, Other)',
+                            nullable: false,
+                        },
+                        lineItems: {
+                            type: SchemaType.ARRAY,
+                            description: 'Individual items from the receipt',
+                            items: {
+                                type: SchemaType.OBJECT,
+                                properties: {
+                                    description: {
+                                        type: SchemaType.STRING,
+                                        description: 'Item description',
+                                        nullable: false,
+                                    },
+                                    quantity: {
+                                        type: SchemaType.NUMBER,
+                                        description: 'Item quantity',
+                                        nullable: false,
+                                    },
+                                    price: {
+                                        type: SchemaType.NUMBER,
+                                        description: 'Item price',
+                                        nullable: false,
+                                    },
+                                },
+                                required: ['description', 'quantity', 'price'],
+                            },
+                            nullable: false,
+                        },
+                    },
+                    required: ['merchant', 'date', 'total', 'category', 'lineItems'],
+                },
             },
         });
 
         const systemInstruction = `You are a receipt data extraction assistant. Extract the following information from receipt images:
 - merchant: Store/restaurant name
 - date: Transaction date in YYYY-MM-DD format
-- total: Total amount (number only, no currency symbols)
-- currency: ISO 4217 currency code (USD, EUR, GBP, JPY, CAD, EGP, SAR)
+- total: Total amount (number only, no currency symbols or codes)
 - category: One of: Food & Drink, Groceries, Travel, Shopping, Utilities, Other
 - lineItems: Array of items with description, quantity, and price
 
-Return ONLY valid JSON matching this schema:
-{
-  "merchant": "string",
-  "date": "YYYY-MM-DD",
-  "total": number,
-  "currency": "USD|EUR|GBP|JPY|CAD|EGP|SAR",
-  "category": "Food & Drink|Groceries|Travel|Shopping|Utilities|Other",
-  "lineItems": [
-    {
-      "description": "string",
-      "quantity": number,
-      "price": number
-    }
-  ]
-}
-
-If currency is invalid or unclear, default to "USD".
-If date is unclear, use today's date.
-If lineItems are not visible, return an empty array.`;
+Important:
+- Extract the raw numeric total value without any currency symbols
+- If date is unclear, use today's date
+- If lineItems are not visible or unclear, return an empty array
+- All fields are required and must match the schema`;
 
         try {
             // Extract mime type and data from base64 string
@@ -69,12 +107,6 @@ If lineItems are not visible, return an empty array.`;
 
             // Parse JSON response
             const expenseData = JSON.parse(text);
-
-            // Validate currency code
-            const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'EGP', 'SAR'];
-            if (!validCurrencies.includes(expenseData.currency)) {
-                expenseData.currency = 'USD';
-            }
 
             return {
                 success: true,

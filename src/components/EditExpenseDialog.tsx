@@ -1,20 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
-import { toast } from 'sonner';
-import { Save, Loader } from 'lucide-react';
-import { expenseService, ExpenseData } from '@/lib/expense-service';
-import type { Expense } from '../../worker/types';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { ExpenseForm } from './ExpenseForm';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import { toast } from "sonner";
+import { Save, Loader } from "lucide-react";
+import { expenseService, ExpenseData } from "@/lib/expense-service";
+import type { Expense } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ExpenseForm } from "./ExpenseForm";
 interface EditExpenseDialogProps {
   expense: Expense | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (updatedExpense: Expense) => void;
 }
-export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({ expense, open, onOpenChange, onSave }) => {
+export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
+  expense,
+  open,
+  onOpenChange,
+  onSave,
+}) => {
   const [editedData, setEditedData] = useState<ExpenseData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const isMobile = useIsMobile();
@@ -27,16 +47,23 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({ expense, o
     if (editedData && expense) {
       setIsSaving(true);
       try {
-        const response = await expenseService.updateExpense(expense.id, editedData);
+        const response = await expenseService.updateExpense(
+          expense.id,
+          editedData
+        );
         if (response.success && response.data) {
-          toast.success('Expense Updated!', { description: `Changes to ${response.data.merchant} have been saved.` });
+          toast.success("Expense Updated!", {
+            description: `Changes to ${response.data.merchant} have been saved.`,
+          });
           onSave(response.data);
           onOpenChange(false);
         } else {
-          toast.error('Update Failed', { description: response.error });
+          toast.error("Update Failed", { description: response.error });
         }
       } catch (e) {
-        toast.error('Update Error', { description: 'Could not connect to the server.' });
+        toast.error("Update Error", {
+          description: "Could not connect to the server.",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -58,16 +85,23 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({ expense, o
           <DrawerHeader>
             <DrawerTitle>Edit Expense</DrawerTitle>
             <DrawerDescription>
-              Make changes to your expense record below. Click save when you're done.
+              Make changes to your expense record below. Click save when you're
+              done.
             </DrawerDescription>
           </DrawerHeader>
           <FormContent />
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant="outline" disabled={isSaving}>Cancel</Button>
+              <Button variant="outline" disabled={isSaving}>
+                Cancel
+              </Button>
             </DrawerClose>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              {isSaving ? (
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Save Changes
             </Button>
           </DrawerFooter>
@@ -81,14 +115,25 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({ expense, o
         <DialogHeader>
           <DialogTitle>Edit Expense</DialogTitle>
           <DialogDescription>
-            Make changes to your expense record below. Click save when you're done.
+            Make changes to your expense record below. Click save when you're
+            done.
           </DialogDescription>
         </DialogHeader>
         <FormContent />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            {isSaving ? (
+              <Loader className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
             Save Changes
           </Button>
         </DialogFooter>
