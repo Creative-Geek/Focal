@@ -1,6 +1,21 @@
 name = "focal-finance-tracker"
+main = "worker/index.ts"
 compatibility_date = "2025-10-04"
+compatibility_flags = ["nodejs_compat"]
 
-# Static site configuration - deploy dist folder as assets
-[assets]
-directory = "./dist"
+# Serve frontend assets (production only)
+# For local development, Vite serves the frontend on port 3000
+# Uncomment for production builds:
+# [assets]
+# directory = "./dist"
+# binding = "ASSETS"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "focal_expensi_db"
+database_id = "85a073b1-3c48-4a21-bf35-68e7c473d654"
+
+# Environment variables (use wrangler secrets for production)
+[vars]
+NODE_ENV = "development"

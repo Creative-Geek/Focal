@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SettingsDialog } from "./SettingsDialog";
 import { Button } from "./ui/button";
+import { UserMenu } from "./UserMenu";
 const Header: React.FC = () => {
   const activeLinkClass = "text-focal-blue-500";
   const inactiveLinkClass =
@@ -45,7 +46,10 @@ const Header: React.FC = () => {
               Expenses
             </NavLink>
           </nav>
-          <ThemeToggle className="relative top-0 right-0" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="relative top-0 right-0" />
+            <UserMenu />
+          </div>
         </div>
       </div>
     </header>

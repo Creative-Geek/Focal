@@ -50,10 +50,9 @@ export const HomePage: React.FC = () => {
     try {
       const response = await expenseService.processReceipt(base64Image);
       if (response.success && response.data) {
-        const defaultCurrency = expenseService.getDefaultCurrency();
         setExtractedData({
           ...response.data,
-          currency: response.data.currency || defaultCurrency,
+          currency: response.data.currency || "USD",
           lineItems: response.data.lineItems || [],
         });
       } else {

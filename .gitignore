@@ -35,3 +35,4 @@ data/
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .github/*
+IMPLEMENTATION_COMPLETE.md

@@ -2,27 +2,42 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import { HomePage } from "@/pages/HomePage";
 import { ExpensesPage } from "@/pages/ExpensesPage";
+import { LoginPage } from "@/pages/LoginPage";
 import { Layout } from "@/components/Layout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthProvider } from "@/contexts/AuthContext";
+
 const router = createBrowserRouter([
   {
-    element: <Layout />,
+    path: "/login",
+    element: <LoginPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    element: <ProtectedRoute />,
     errorElement: <RouteErrorBoundary />,
     children: [
       {
-        path: "/",
-        element: <HomePage />,
+        element: <Layout />,
+        children: [
+          {
+            path: "/",
+            element: <HomePage />,
+          },
+          {
+            path: "/expenses",
+            element: <ExpensesPage />,
+          },
+        ],
       },
-      {
-        path: "/expenses",
-        element: <ExpensesPage />,
-      },
-      // {
-      //   path: "/demopage",
-      //   element: <DemoPage />,
-      // },
     ],
   },
 ]);
+
 export function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 }

@@ -4,7 +4,32 @@ A minimalist, AI-powered receipt scanner that instantly captures, analyzes, and 
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Creative-Geek/Focal)
 
-Focal is an elegant, minimalist financial tracker designed for speed and simplicity. Its core purpose is to eliminate the friction of expense tracking by leveraging AI. The user is immediately presented with a camera interface to snap a photo of a receipt. This image is processed by a vision-enabled LLM on Cloudflare's edge network to extract structured data (merchant, total, date, line items). The user then reviews and confirms the extracted data in a clean, intuitive dialog before it's saved. A secondary view provides a beautifully simple dashboard to visualize and manage all captured expenses for the session.
+Focal is an elegant, minimalist financial tracker designed for speed and simplicity. Its core purpose is to eliminate the friction of expense tracking by leveraging AI. The user is immediately presented with a camera interface to snap a photo of a receipt. This image is processed by a vision-enabled LLM on Cloudflare's edge network to extract structured data (merchant, total, date, line items). The user then reviews and confirms the extracted data in a clean, intuitive dialog before it's saved. A secondary view provides a beautifully simple dashboard to visualize and manage all captured expenses.
+
+## 🚀 Quick Setup
+
+**Get started in 3 steps:**
+
+1. **Login to Cloudflare:**
+
+   ```bash
+   pnpm wrangler login
+   ```
+
+2. **Create environment secrets** (`.dev.vars` file):
+
+   ```bash
+   JWT_SECRET=your-secret-here
+   ENCRYPTION_KEY=your-encryption-key-here
+   ```
+
+3. **Run migrations and start:**
+   ```bash
+   pnpm db:migrate
+   pnpm dev:full
+   ```
+
+📖 **Full setup guide:** See [`IMPLEMENTATION_COMPLETE.md`](./IMPLEMENTATION_COMPLETE.md) for detailed instructions.
 
 ## Key Features
 
