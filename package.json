@@ -12,7 +12,8 @@
     "preview": "bun run build && vite preview --host 0.0.0.0 --port ${PORT:-4173}",
     "deploy": "pnpm run build && wrangler deploy",
     "db:migrate": "wrangler d1 execute focal_expensi_db --local --file=./migrations/001_initial_schema.sql",
-    "db:migrate:prod": "wrangler d1 execute focal_expensi_db --remote --file=./migrations/001_initial_schema.sql"
+    "db:migrate:prod": "wrangler d1 execute focal_expensi_db --remote --file=./migrations/001_initial_schema.sql",
+    "setup:prod": "bash scripts/setup-production.sh"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

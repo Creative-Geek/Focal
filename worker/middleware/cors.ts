@@ -10,6 +10,8 @@ export async function corsMiddleware(c: Context, next: Next) {
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8787',
+        'https://focal.creative-geek.tech',
+        'https://focal-finance-tracker.pages.dev',
     ];
 
     // In production, check if origin is in allowed list

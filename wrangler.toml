@@ -18,4 +18,8 @@ database_id = "85a073b1-3c48-4a21-bf35-68e7c473d654"
 
 # Environment variables (use wrangler secrets for production)
 [vars]
-NODE_ENV = "development"
+NODE_ENV = "production"
+
+# Production secrets (set using wrangler secret put):
+# JWT_SECRET - Secret key for JWT token signing
+# ENCRYPTION_KEY - Key for encrypting API keys in database

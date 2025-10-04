@@ -1,35 +1,65 @@
 # Focal: AI Receipt Scanner & Expense Tracker
 
-A minimalist, AI-powered receipt scanner that instantly captures, analyzes, and organizes your expenses with a single photo.
+> **Live at:** [focal.creative-geek.tech](https://focal.creative-geek.tech)
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Creative-Geek/Focal)
+A full-stack, AI-powered receipt scanner that instantly captures, analyzes, and organizes your expenses with a single photo. Built with React, Cloudflare Workers, D1 database, and Google Gemini AI.
 
-Focal is an elegant, minimalist financial tracker designed for speed and simplicity. Its core purpose is to eliminate the friction of expense tracking by leveraging AI. The user is immediately presented with a camera interface to snap a photo of a receipt. This image is processed by a vision-enabled LLM on Cloudflare's edge network to extract structured data (merchant, total, date, line items). The user then reviews and confirms the extracted data in a clean, intuitive dialog before it's saved. A secondary view provides a beautifully simple dashboard to visualize and manage all captured expenses.
+Focal is an elegant financial tracker designed for speed and simplicity. Snap a photo of any receipt, and AI automatically extracts merchant, total, date, and line items. Review the data in a clean interface, then save it to your personal cloud database. Access your expenses from any device with secure user authentication.
 
-## 🚀 Quick Setup
+## ✨ Features
 
-**Get started in 3 steps:**
+- 📸 **AI-Powered Scanning** - Camera-first interface for instant receipt capture
+- 🤖 **Smart Extraction** - Google Gemini AI extracts merchant, total, date, and line items
+- ✏️ **Review & Edit** - Clean dialog for verifying and correcting data
+- 💾 **Cloud Sync** - All expenses saved to Cloudflare D1 database
+- 🔐 **Secure Auth** - User accounts with JWT authentication
+- 📊 **Dashboard** - Visualize spending patterns with charts
+- 🌓 **Dark Mode** - Beautiful light and dark themes
+- 📱 **Responsive** - Flawless on desktop, tablet, and mobile
+- ⚡ **Edge Computing** - Fast, globally distributed on Cloudflare's network
 
-1. **Login to Cloudflare:**
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and pnpm
+- Cloudflare account (free tier works)
+- Google Gemini API key ([get one here](https://makersuite.google.com/app/apikey))
+
+### Local Development
+
+1. **Clone and install:**
+
+   ```bash
+   git clone https://github.com/Creative-Geek/Focal.git
+   cd Focal
+   pnpm install
+   ```
+
+2. **Login to Cloudflare:**
 
    ```bash
    pnpm wrangler login
    ```
 
-2. **Create environment secrets** (`.dev.vars` file):
+3. **Set up local database:**
 
-   ```bash
-   JWT_SECRET=your-secret-here
-   ENCRYPTION_KEY=your-encryption-key-here
-   ```
-
-3. **Run migrations and start:**
    ```bash
    pnpm db:migrate
+   ```
+
+4. **Start development servers:**
+
+   ```bash
    pnpm dev:full
    ```
 
-📖 **Full setup guide:** See [`IMPLEMENTATION_COMPLETE.md`](./IMPLEMENTATION_COMPLETE.md) for detailed instructions.
+   Frontend: <http://localhost:3000>  
+   Backend: <http://localhost:8787>
+
+5. **Create account and add your Gemini API key in Settings**
+
+📖 **Detailed setup:** See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for production deployment guide.
 
 ## Key Features
 
@@ -41,105 +71,142 @@ Focal is an elegant, minimalist financial tracker designed for speed and simplic
 - **Responsive Design:** Flawless experience on desktop, tablet, and mobile devices.
 - **Built on Cloudflare:** High-performance and scalable, running on the Cloudflare edge network.
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-- **Frontend:**
-  - [React](https://react.dev/)
-  - [Vite](https://vitejs.dev/)
-  - [TypeScript](https://www.typescriptlang.org/)
-  - [Tailwind CSS](https://tailwindcss.com/)
-  - [shadcn/ui](https://ui.shadcn.com/)
-  - [Framer Motion](https://www.framer.com/motion/)
-  - [Recharts](https://recharts.org/)
-  - [Lucide React](https://lucide.dev/)
-  - [React Webcam](https://www.npmjs.com/package/react-webcam)
-- **Backend:**
-  - [Cloudflare Workers](https://workers.cloudflare.com/)
-  - [Hono](https://hono.dev/)
-- **Data Persistence:**
-  - [Cloudflare Durable Objects](https://developers.cloudflare.com/durable-objects/)
-- **AI:**
-  - [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/)
+**Frontend:**
 
-## Getting Started
+- React 18 + TypeScript 5.8 + Vite 6
+- Tailwind CSS + shadcn/ui
+- React Router DOM + Framer Motion
+- Recharts for data visualization
+- React Webcam for camera access
 
-Follow these instructions to get the project up and running on your local machine for development and testing purposes.
+**Backend:**
 
-### Prerequisites
+- Cloudflare Workers (serverless API)
+- Hono.js (lightweight HTTP framework)
+- JWT authentication with bcrypt
+- D1 database (SQLite)
 
-- [Node.js](https://nodejs.org/) (v18 or later)
-- [Bun](https://bun.sh/) package manager
+**AI:**
 
-### Installation
+- Google Gemini 2.5 Flash
+- Server-side API key encryption
+- Structured JSON extraction
 
-1.  **Clone the repository:**
+**Infrastructure:**
 
-    ```bash
-    git clone https://github.com/your-username/focal-finance-tracker.git
-    cd focal-finance-tracker
-    ```
+- Cloudflare Pages (automatic GitHub deployments)
+- Cloudflare D1 (persistent database)
+- Edge computing (low latency globally)
 
-2.  **Install dependencies:**
+## 📖 Usage
 
-    ```bash
-    bun install
-    ```
+1. **Sign Up** - Create an account at [focal.creative-geek.tech](https://focal.creative-geek.tech)
+2. **Add API Key** - Go to Settings and paste your Google Gemini API key
+3. **Scan Receipt** - Use camera or upload image
+4. **Review Data** - Check extracted merchant, total, date, items
+5. **Save** - Expense is stored in your cloud database
+6. **Track** - View all expenses in the dashboard with charts
 
-3.  **Configure Environment Variables:**
-    Create a `.dev.vars` file in the root of the project for local development. This file is used by Wrangler to load environment variables.
+## 📁 Project Structure
 
-    ```ini
-    # .dev.vars
-    CF_AI_BASE_URL="https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT_ID/YOUR_GATEWAY_ID/openai"
-    CF_AI_API_KEY="your-cloudflare-api-key"
-    ```
-
-    Replace the placeholder values with your actual Cloudflare AI Gateway details.
-
-### Running in Development Mode
-
-To start the development server for both the frontend and the worker, run:
-
-```bash
-bun dev
+```
+Focal/
+├── src/                      # Frontend React application
+│   ├── pages/                # Main routes (HomePage, ExpensesPage, LoginPage)
+│   ├── components/           # React components + shadcn/ui
+│   ├── lib/                  # Core services (expense-service.ts)
+│   ├── hooks/                # Custom hooks (useAuth, useTheme)
+│   └── types.ts              # TypeScript interfaces
+├── worker/                   # Cloudflare Workers backend
+│   ├── handlers/             # API route handlers
+│   ├── middleware/           # Auth, CORS middleware
+│   ├── services/             # Business logic (auth, db, gemini)
+│   └── index.ts              # Worker entry point
+├── migrations/               # D1 database schema
+├── DEPLOYMENT.md            # Production deployment guide
+└── TODO.md                  # Development roadmap
 ```
 
-This will start the Vite development server on `http://localhost:3000` and the Cloudflare Worker on a separate port, with requests automatically proxied.
+## 🚢 Deployment
 
-## Deployment
+The app auto-deploys to Cloudflare Pages on every push to main branch.
 
-This project is designed for easy deployment to Cloudflare Pages.
+**Production deployment:**
 
-1.  **Login to Wrangler:**
+```bash
+# Set production secrets
+pnpm setup:prod
 
-    ```bash
-    bun wrangler login
-    ```
+# Deploy database schema
+pnpm db:migrate:prod
 
-2.  **Deploy the application:**
+# Push to GitHub (triggers auto-deploy)
+git push origin main
+```
 
-    ```bash
-    bun deploy
-    ```
+**Custom domain setup:**
 
-    This command will build the Vite application and deploy it along with the Cloudflare Worker.
+1. Cloudflare Pages → Custom domains → Add `focal.creative-geek.tech`
+2. DNS: Add CNAME `focal` → `focal-finance-tracker.pages.dev`
+3. Wait 5-10 minutes for SSL provisioning
 
-3.  **Configure Production Secrets:**
-    After deployment, you must add your AI Gateway API key as a secret in the Cloudflare dashboard.
+See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for detailed instructions.
 
-    ```bash
-    bun wrangler secret put CF_AI_API_KEY
-    ```
+## 🔐 Security
 
-    You will also need to set the `CF_AI_BASE_URL` variable in your project's settings on the Cloudflare dashboard.
+- User passwords hashed with bcrypt
+- API keys encrypted at rest in D1 database
+- JWT authentication with httpOnly cookies (production)
+- Bearer token authentication (development)
+- CORS protection for trusted domains only
+- SQL injection prevention via D1 prepared statements
 
-Alternatively, you can deploy directly from your GitHub repository.
+## 🎯 Roadmap
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Creative-Geek/Focal)
+- [x] Full-stack migration to Cloudflare Workers + D1
+- [x] User authentication with JWT
+- [x] Encrypted API key storage
+- [x] Custom domain support
+- [ ] OAuth login (Google, GitHub)
+- [ ] Export expenses (CSV, PDF)
+- [ ] Multi-currency support
+- [ ] Expense categories management
+- [ ] Budget tracking and alerts
+- [ ] Mobile app (React Native)
 
-### Important Note on AI Features
+See [`TODO.md`](./TODO.md) for detailed development plan.
 
-This project utilizes Cloudflare's AI Gateway for its receipt scanning capabilities. For the AI features to function after deployment, you **must** configure your own `CF_AI_BASE_URL` and `CF_AI_API_KEY` in your Cloudflare project's settings. The provided template does not include working API keys for security reasons.
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License - see [`LICENSE`](./LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful components
+- [Google Gemini](https://ai.google.dev/) for AI capabilities
+- [Cloudflare](https://cloudflare.com/) for infrastructure
+- [Hono](https://hono.dev/) for elegant API framework
+
+## 📧 Contact
+
+**Project Link:** [github.com/Creative-Geek/Focal](https://github.com/Creative-Geek/Focal)  
+**Live Demo:** [focal.creative-geek.tech](https://focal.creative-geek.tech)
+
+---
+
+Built with ❤️ using React, Cloudflare Workers, and Google Gemini AI
 
 ## License
 
