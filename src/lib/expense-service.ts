@@ -28,7 +28,7 @@ class ExpenseService {
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.5-flash",
         systemInstruction: `You are an expert receipt processing AI. Extract the following information from the user's receipt image and return it as a valid JSON object. The JSON schema should be: { "merchant": string, "date": "YYYY-MM-DD", "total": number, "currency": string (use ISO 4217 codes like "USD", "EUR", "GBP", "JPY", "CAD", "EGP", "SAR" - never use "Unknown"), "category": "Food & Drink" | "Groceries" | "Travel" | "Shopping" | "Utilities" | "Other", "lineItems": [{ "description": string, "quantity": number, "price": number }] }. IMPORTANT: The currency field must be a valid 3-letter ISO 4217 currency code. If you cannot determine the currency from the receipt, use "USD" as the default. Never use "Unknown" or any invalid currency code. If a value is not clear, make a reasonable guess or use a placeholder. Ensure the total is a number. Respond ONLY with the JSON object.`,
         generationConfig: { responseMimeType: "application/json" },
       });
