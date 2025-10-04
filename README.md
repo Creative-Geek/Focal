@@ -154,7 +154,25 @@ git push origin main
 
 See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for detailed instructions.
 
-## 🔐 Security
+## � Install as a PWA
+
+Focal is installable as a Progressive Web App (PWA) on desktop and mobile.
+
+- In Chrome/Edge, click the “Install app” icon in the address bar or use the browser menu → Install Focal.
+- On iOS Safari, tap Share → Add to Home Screen.
+
+Notes:
+
+- The app uses a service worker with auto updates. New versions are applied after closing all tabs or on next launch.
+- API calls to `/api/*` are never cached; offline mode allows you to open the UI, but network actions require connectivity.
+
+Local testing:
+
+1. Start the dev servers: `pnpm dev:full`
+2. Open <http://localhost:3000> and check Application → Manifest in DevTools. You should see “Installable”.
+3. To test production behavior, run `pnpm build` then `pnpm preview` and open the preview URL.
+
+## �🔐 Security
 
 - User passwords hashed with bcrypt
 - API keys encrypted at rest in D1 database

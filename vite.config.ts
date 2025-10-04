@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import path from "path";
 import react from "@vitejs/plugin-react";
 import { exec } from "node:child_process";
+import { VitePWA } from "vite-plugin-pwa";
 
 const stripAnsi = (str: string) =>
   str.replace(
@@ -81,7 +82,46 @@ function watchDependenciesPlugin() {
 export default ({ mode }: { mode: string }) => {
   const env = loadEnv(mode, process.cwd());
   return defineConfig({
-    plugins: [react(), watchDependenciesPlugin()],
+    plugins: [
+      react(),
+      watchDependenciesPlugin(),
+      VitePWA({
+        registerType: "autoUpdate",
+        manifestFilename: "site.webmanifest",
+        includeAssets: [
+          // existing public assets to include
+          "vite.svg",
+        ],
+        workbox: {
+          navigateFallbackDenylist: [/^\/api\//],
+          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        },
+        manifest: {
+          name: "Focal: AI Receipt Scanner",
+          short_name: "Focal",
+          description: "Scan receipts with AI and track expenses.",
+          theme_color: "#111827",
+          background_color: "#111827",
+          display: "standalone",
+          start_url: "/",
+          scope: "/",
+          categories: [
+            "productivity",
+            "finance",
+          ],
+          icons: [
+            { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+            { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+            { src: "/pwa-maskable-192x192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+            { src: "/pwa-maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          ],
+        },
+        devOptions: { enabled: true },
+        pwaAssets: {
+          image: "public/vite.svg",
+        },
+      }),
+    ],
     build: {
       minify: true,
       sourcemap: "inline", // Use inline source maps for better error reporting
