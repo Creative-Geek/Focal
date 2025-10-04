@@ -7,11 +7,11 @@ export class GeminiService {
     /**
      * Process a receipt image and extract expense data
      */
-    async processReceipt(apiKey: string, base64Image: string): Promise<any> {
+    async processReceipt(apiKey: string, base64Image: string, modelName: string): Promise<any> {
         const genAI = new GoogleGenerativeAI(apiKey);
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash-lite',
+            model: modelName,
             generationConfig: {
                 responseMimeType: 'application/json',
                 responseSchema: {

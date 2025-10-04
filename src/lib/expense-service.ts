@@ -29,11 +29,12 @@ class ExpenseService {
    */
   async processReceipt(base64Image: string): Promise<{ success: boolean; data?: ExpenseData; error?: string }> {
     try {
+      const model = localStorage.getItem('gemini_model') || 'gemini-2.5-flash-lite';
       const response = await fetch(`${API_BASE_URL}/receipts/process`, {
         method: 'POST',
         headers: getAuthHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ image: base64Image }),
+        body: JSON.stringify({ image: base64Image, model }),
       });
 
       const result = await response.json();

@@ -39,6 +39,7 @@ import {
   Trash2,
   Pencil,
   Search,
+  ChevronDown,
 } from "lucide-react";
 import { expenseService } from "@/lib/expense-service";
 import type { Expense } from "@/types";
@@ -109,6 +110,12 @@ export const ExpensesPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
+  // Track which expenses are expanded to show line items
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleExpanded = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const fetchUserSettings = async () => {
     try {
@@ -386,6 +393,7 @@ export const ExpensesPage: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8" aria-label="expand column" />
                     <TableHead>Date</TableHead>
                     <TableHead>Merchant</TableHead>
                     <TableHead>Category</TableHead>
@@ -395,58 +403,153 @@ export const ExpensesPage: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredExpenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>
-                        {new Date(expense.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {expense.merchant}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{expense.category}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(expense.total, expense.currency)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(expense)}
+                    <React.Fragment key={expense.id}>
+                      <TableRow
+                        onClick={() => toggleExpanded(expense.id)}
+                        className="cursor-pointer hover:bg-muted/40"
+                        aria-expanded={!!expanded[expense.id]}
+                        aria-label={`Expense ${expense.merchant} on ${new Date(
+                          expense.date
+                        ).toLocaleDateString()}`}
+                      >
+                        <TableCell className="text-muted-foreground">
+                          <button
+                            type="button"
+                            aria-label={
+                              expanded[expense.id] ? "Collapse" : "Expand"
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpanded(expense.id);
+                            }}
+                            className="p-1 rounded hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring"
                           >
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Are you sure?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will
-                                  permanently delete this expense record.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(expense.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${
+                                expanded[expense.id] ? "rotate-180" : "rotate-0"
+                              }`}
+                            />
+                          </button>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(expense.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {expense.merchant}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{expense.category}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(expense.total, expense.currency)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(expense);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Are you sure?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will
+                                    permanently delete this expense record.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(expense.id)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expanded[expense.id] && (
+                        <TableRow className="bg-muted/30">
+                          <TableCell colSpan={6} className="p-0">
+                            <div className="px-4 py-3">
+                              <div className="text-sm font-medium mb-2">
+                                Line items
+                              </div>
+                              {expense.lineItems &&
+                              expense.lineItems.length > 0 ? (
+                                <div className="rounded-md border">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead className="w-20 text-right">
+                                          Qty
+                                        </TableHead>
+                                        <TableHead className="w-28 text-right">
+                                          Price
+                                        </TableHead>
+                                        <TableHead className="w-32 text-right">
+                                          Subtotal
+                                        </TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {expense.lineItems.map((item, idx) => (
+                                        <TableRow key={idx}>
+                                          <TableCell className="max-w-[300px] truncate">
+                                            {item.description}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            {item.quantity}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            {formatCurrency(
+                                              item.price,
+                                              expense.currency
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            {formatCurrency(
+                                              item.quantity * item.price,
+                                              expense.currency
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground">
+                                  No items
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>
@@ -458,11 +561,21 @@ export const ExpensesPage: React.FC = () => {
               Recent Transactions
             </h2>
             {filteredExpenses.map((expense) => (
-              <Card key={expense.id}>
+              <Card
+                key={expense.id}
+                onClick={() => toggleExpanded(expense.id)}
+                className="transition-colors cursor-pointer hover:bg-muted/40"
+                aria-expanded={!!expanded[expense.id]}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start gap-2">
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg truncate">
+                      <CardTitle className="text-base sm:text-lg truncate flex items-center gap-2">
+                        <ChevronDown
+                          className={`h-4 w-4 shrink-0 transition-transform ${
+                            expanded[expense.id] ? "rotate-180" : "rotate-0"
+                          }`}
+                        />
                         {expense.merchant}
                       </CardTitle>
                       <p className="text-xs sm:text-sm text-muted-foreground">
@@ -483,7 +596,10 @@ export const ExpensesPage: React.FC = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleEdit(expense)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(expense);
+                    }}
                   >
                     <Pencil className="h-4 w-4 mr-2" /> Edit
                   </Button>
@@ -493,6 +609,7 @@ export const ExpensesPage: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-4 w-4 mr-2" /> Delete
                       </Button>
@@ -517,6 +634,38 @@ export const ExpensesPage: React.FC = () => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </CardFooter>
+                {expanded[expense.id] && (
+                  <div className="px-4 pb-4">
+                    <div className="text-sm font-medium mb-2">Line items</div>
+                    {expense.lineItems && expense.lineItems.length > 0 ? (
+                      <div className="space-y-2">
+                        {expense.lineItems.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between rounded-md border p-2"
+                          >
+                            <div className="pr-2 text-sm">
+                              {item.description}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              x{item.quantity}
+                            </div>
+                            <div className="ml-auto text-sm">
+                              {formatCurrency(
+                                item.quantity * item.price,
+                                expense.currency
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No items
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
             ))}
           </div>

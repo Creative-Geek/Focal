@@ -19,8 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useModel } from "@/hooks/use-model";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
+const MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 const API_BASE_URL = "/api";
 
 // Helper to get auth headers
@@ -48,6 +50,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
 }) => {
   const [apiKey, setApiKey] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const { model, setModel } = useModel();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasExistingKey, setHasExistingKey] = useState(false);
@@ -207,6 +210,23 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                     {CURRENCIES.map((c) => (
                       <SelectItem key={c} value={c}>
                         {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="model" className="text-right col-span-1">
+                  Model
+                </Label>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODELS.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
                       </SelectItem>
                     ))}
                   </SelectContent>

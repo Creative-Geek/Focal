@@ -29,7 +29,7 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         return error(validation.error, 400);
     }
 
-    const { image } = validation.data;
+    const { image, model } = validation.data;
 
     // Get user's API key
     const apiKeyRecord = await dbService.getApiKey(userId);
@@ -43,8 +43,9 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         return error('Failed to decrypt API key', 500);
     }
 
-    // Process the receipt with Gemini
-    const result = await geminiService.processReceipt(apiKey, image);
+    // Process the receipt with Gemini (default to lightweight model if not provided)
+    const selectedModel = model || 'gemini-2.5-flash-lite';
+    const result = await geminiService.processReceipt(apiKey, image, selectedModel);
 
     if (!result.success) {
         return error(result.error || 'Failed to process receipt', 500);
