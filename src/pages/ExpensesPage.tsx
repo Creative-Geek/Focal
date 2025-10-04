@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -489,66 +489,81 @@ export const ExpensesPage: React.FC = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                      {expanded[expense.id] && (
-                        <TableRow className="bg-muted/30">
-                          <TableCell colSpan={6} className="p-0">
-                            <div className="px-4 py-3">
-                              <div className="text-sm font-medium mb-2">
-                                Line items
-                              </div>
-                              {expense.lineItems &&
-                              expense.lineItems.length > 0 ? (
-                                <div className="rounded-md border">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead className="w-20 text-right">
-                                          Qty
-                                        </TableHead>
-                                        <TableHead className="w-28 text-right">
-                                          Price
-                                        </TableHead>
-                                        <TableHead className="w-32 text-right">
-                                          Subtotal
-                                        </TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {expense.lineItems.map((item, idx) => (
-                                        <TableRow key={idx}>
-                                          <TableCell className="max-w-[300px] truncate">
-                                            {item.description}
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                            {item.quantity}
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                            {formatCurrency(
-                                              item.price,
-                                              expense.currency
-                                            )}
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                            {formatCurrency(
-                                              item.quantity * item.price,
-                                              expense.currency
-                                            )}
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
+                      <AnimatePresence initial={false}>
+                        {expanded[expense.id] && (
+                          <TableRow
+                            className="bg-muted/30"
+                            key={`details-${expense.id}`}
+                          >
+                            <TableCell colSpan={6} className="p-0">
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25, ease: "easeOut" }}
+                                style={{ overflow: "hidden" }}
+                              >
+                                <div className="px-4 py-3">
+                                  <div className="text-sm font-medium mb-2">
+                                    Line items
+                                  </div>
+                                  {expense.lineItems &&
+                                  expense.lineItems.length > 0 ? (
+                                    <div className="rounded-md border">
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead>Item</TableHead>
+                                            <TableHead className="w-20 text-right">
+                                              Qty
+                                            </TableHead>
+                                            <TableHead className="w-28 text-right">
+                                              Price
+                                            </TableHead>
+                                            <TableHead className="w-32 text-right">
+                                              Subtotal
+                                            </TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {expense.lineItems.map(
+                                            (item, idx) => (
+                                              <TableRow key={idx}>
+                                                <TableCell className="max-w-[300px] truncate">
+                                                  {item.description}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                  {item.quantity}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                  {formatCurrency(
+                                                    item.price,
+                                                    expense.currency
+                                                  )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                  {formatCurrency(
+                                                    item.quantity * item.price,
+                                                    expense.currency
+                                                  )}
+                                                </TableCell>
+                                              </TableRow>
+                                            )
+                                          )}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground">
+                                      No items
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                <div className="text-sm text-muted-foreground">
-                                  No items
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
+                              </motion.div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </AnimatePresence>
                     </React.Fragment>
                   ))}
                 </TableBody>
@@ -634,38 +649,51 @@ export const ExpensesPage: React.FC = () => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </CardFooter>
-                {expanded[expense.id] && (
-                  <div className="px-4 pb-4">
-                    <div className="text-sm font-medium mb-2">Line items</div>
-                    {expense.lineItems && expense.lineItems.length > 0 ? (
-                      <div className="space-y-2">
-                        {expense.lineItems.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between rounded-md border p-2"
-                          >
-                            <div className="pr-2 text-sm">
-                              {item.description}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              x{item.quantity}
-                            </div>
-                            <div className="ml-auto text-sm">
-                              {formatCurrency(
-                                item.quantity * item.price,
-                                expense.currency
-                              )}
-                            </div>
+                <AnimatePresence initial={false}>
+                  {expanded[expense.id] && (
+                    <motion.div
+                      key={`mobile-details-${expense.id}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div className="px-4 pb-4">
+                        <div className="text-sm font-medium mb-2">
+                          Line items
+                        </div>
+                        {expense.lineItems && expense.lineItems.length > 0 ? (
+                          <div className="space-y-2">
+                            {expense.lineItems.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between rounded-md border p-2"
+                              >
+                                <div className="pr-2 text-sm">
+                                  {item.description}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  x{item.quantity}
+                                </div>
+                                <div className="ml-auto text-sm">
+                                  {formatCurrency(
+                                    item.quantity * item.price,
+                                    expense.currency
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            No items
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        No items
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Card>
             ))}
           </div>
