@@ -504,9 +504,6 @@ export const ExpensesPage: React.FC = () => {
                                 style={{ overflow: "hidden" }}
                               >
                                 <div className="px-4 py-3">
-                                  <div className="text-sm font-medium mb-2">
-                                    Line items
-                                  </div>
                                   {expense.lineItems &&
                                   expense.lineItems.length > 0 ? (
                                     <div className="rounded-md border">
@@ -660,9 +657,6 @@ export const ExpensesPage: React.FC = () => {
                       style={{ overflow: "hidden" }}
                     >
                       <div className="px-4 pb-4">
-                        <div className="text-sm font-medium mb-2">
-                          Line items
-                        </div>
                         {expense.lineItems && expense.lineItems.length > 0 ? (
                           <div className="space-y-2">
                             {expense.lineItems.map((item, idx) => (
