@@ -28,7 +28,7 @@ export const expenseSchema = z.object({
     lineItems: z.array(
         z.object({
             description: z.string().min(1, 'Description is required'),
-            quantity: z.number().int().positive('Quantity must be a positive integer'),
+            quantity: z.number().positive('Quantity must be a positive number'),
             price: z.number().positive('Price must be positive'),
         })
     ),

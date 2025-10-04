@@ -143,13 +143,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             <Input
               className="col-span-2 text-xs sm:text-sm"
               type="number"
+              step="any"
               placeholder="Qty"
               value={item.quantity}
               onChange={(e) =>
                 handleLineItemChange(
                   index,
                   "quantity",
-                  parseInt(e.target.value) || 0
+                  parseFloat(e.target.value) || 0
                 )
               }
             />

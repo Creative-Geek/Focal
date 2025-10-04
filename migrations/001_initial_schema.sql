@@ -40,7 +40,7 @@ CREATE TABLE line_items (
   id TEXT PRIMARY KEY,
   expense_id TEXT NOT NULL,
   description TEXT NOT NULL,
-  quantity INTEGER NOT NULL,
+  quantity REAL NOT NULL,
   price REAL NOT NULL,
   FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
 );

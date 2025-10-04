@@ -13,6 +13,8 @@
     "deploy": "pnpm run build && wrangler deploy",
     "db:migrate": "wrangler d1 execute focal_expensi_db --local --file=./migrations/001_initial_schema.sql",
     "db:migrate:prod": "wrangler d1 execute focal_expensi_db --remote --file=./migrations/001_initial_schema.sql",
+    "db:migrate:002": "wrangler d1 execute focal_expensi_db --local --file=./migrations/002_quantity_real.sql",
+    "db:migrate:002:prod": "wrangler d1 execute focal_expensi_db --remote --file=./migrations/002_quantity_real.sql",
     "setup:prod": "bash scripts/setup-production.sh"
   },
   "dependencies": {
