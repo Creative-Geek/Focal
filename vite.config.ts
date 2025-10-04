@@ -3,6 +3,7 @@ import path from "path";
 import react from "@vitejs/plugin-react";
 import { exec } from "node:child_process";
 import { VitePWA } from "vite-plugin-pwa";
+import os from "node:os";
 
 const stripAnsi = (str: string) =>
   str.replace(
@@ -115,7 +116,11 @@ export default ({ mode }: { mode: string }) => {
             { src: "/maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
         },
-        devOptions: { enabled: true },
+        devOptions: {
+          enabled: true,
+          // store temp SW files in OS temp to avoid dev-dist glob warnings
+          resolveTempFolder: () => os.tmpdir(),
+        },
         pwaAssets: {
           image: "public/focal-icon.svg",
         },

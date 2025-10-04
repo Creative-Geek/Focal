@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { ScanLine, Settings, Home, Wallet } from "lucide-react";
+import { Settings, Home, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SettingsDialog } from "./SettingsDialog";
@@ -15,9 +15,13 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <NavLink to="/" className="flex items-center gap-1.5 sm:gap-2 group">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-900 dark:bg-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
-              <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 text-white dark:text-gray-900" />
-            </div>
+            <img
+              src="/focal-icon.svg"
+              alt="Focal"
+              width={32}
+              height={32}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+            />
             <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-900 dark:text-white">
               Focal
             </h1>
