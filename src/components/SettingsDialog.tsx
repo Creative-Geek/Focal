@@ -22,7 +22,7 @@ import {
 import { useModel } from "@/hooks/use-model";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
-const MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
 const API_BASE_URL = "/api";
 
 // Helper to get auth headers

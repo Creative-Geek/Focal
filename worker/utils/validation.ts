@@ -36,7 +36,7 @@ export const expenseSchema = z.object({
 
 export const processReceiptSchema = z.object({
     image: z.string().min(1, 'Image data is required'),
-    model: z.enum(['gemini-2.5-flash', 'gemini-2.5-flash-lite']).optional(),
+    model: z.enum(['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']).optional(),
 });
 
 /**
