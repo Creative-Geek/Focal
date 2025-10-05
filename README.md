@@ -37,7 +37,7 @@ cd Focal
 # Install dependencies
 pnpm install
 
-# Set up environment (see DEVELOPMENT.md)
+# Set up environment (see docs/DEVELOPMENT.md)
 # Create .dev.vars with JWT_SECRET and ENCRYPTION_KEY
 
 # Initialize database
@@ -64,10 +64,12 @@ Visit http://localhost:3000 to get started!
 
 ## 📚 Documentation
 
-- **[Development Guide](DEVELOPMENT.md)** - Setup, configuration, and local development
-- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment to Cloudflare
-- **[API Reference](API.md)** - Complete API documentation
-- **[Contributing](CONTRIBUTING.md)** - Guidelines for contributors
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setup, configuration, and local development
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment to Cloudflare
+- **[API Reference](docs/API.md)** - Complete API documentation
+- **[Contributing](docs/CONTRIBUTING.md)** - Guidelines for contributors
+- **[Email Verification Setup](docs/EMAIL_VERIFICATION_SETUP.md)** - Email verification configuration
+- **[Production Checklist](docs/PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
 
 ## 🔒 Security
 
@@ -94,7 +96,7 @@ Built with [React](https://react.dev), [Cloudflare](https://cloudflare.com), [sh
 
 <div align="center">
 
-**[Live Demo](https://focal.creative-geek.tech)** • **[Documentation](DEVELOPMENT.md)** • **[Report Bug](https://github.com/Creative-Geek/Focal/issues)**
+**[Live Demo](https://focal.creative-geek.tech)** • **[Documentation](docs/DEVELOPMENT.md)** • **[Report Bug](https://github.com/Creative-Geek/Focal/issues)**
 
 Made with ❤️ by Creative Geek
 

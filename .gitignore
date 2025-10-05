@@ -34,8 +34,8 @@ bun.lockb
 .env.*
 data/
 .github/*
-IMPLEMENTATION_COMPLETE.md
-TODO.md
-FIXES_APPLIED.md
-PRODUCTION_CHECKLIST.md
+docs/IMPLEMENTATION_COMPLETE.md
+docs/TODO.md
+docs/FIXES_APPLIED.md
+docs/PRODUCTION_CHECKLIST.md
 prompts/usage.md
