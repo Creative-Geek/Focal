@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ export default function VerifyEmailPage() {
     "loading"
   );
   const [message, setMessage] = useState("");
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -29,6 +30,13 @@ export default function VerifyEmailPage() {
       );
       return;
     }
+
+    // Prevent double verification attempts (React Strict Mode)
+    if (verificationAttempted.current) {
+      return;
+    }
+
+    verificationAttempted.current = true;
 
     // Verify the token
     verifyEmail(token);

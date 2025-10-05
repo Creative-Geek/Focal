@@ -291,4 +291,40 @@ export class DBService {
             .bind(token, expiresAt, userId)
             .run();
     }
+
+    // ============ PASSWORD RESET OPERATIONS ============
+
+    async setResetToken(userId: string, token: string, expiresAt: number): Promise<void> {
+        await this.db
+            .prepare('UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?')
+            .bind(token, expiresAt, userId)
+            .run();
+    }
+
+    async verifyResetToken(token: string): Promise<{ success: boolean; userId?: string; error?: string }> {
+        const now = Date.now();
+
+        // Find user by reset token
+        const user = await this.db
+            .prepare('SELECT id, email, reset_token_expires FROM users WHERE reset_token = ?')
+            .bind(token)
+            .first<{ id: string; email: string; reset_token_expires: number }>();
+
+        if (!user) {
+            return { success: false, error: 'Invalid reset token' };
+        }
+
+        if (user.reset_token_expires < now) {
+            return { success: false, error: 'Reset token expired' };
+        }
+
+        return { success: true, userId: user.id };
+    }
+
+    async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+        await this.db
+            .prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?')
+            .bind(hashedPassword, userId)
+            .run();
+    }
 }
