@@ -92,8 +92,31 @@ function StarsBackground({
   pointerEvents = true,
   ...props
 }: StarsBackgroundProps) {
+  const [shouldRenderStars, setShouldRenderStars] = React.useState(false);
+
   const offsetX = useMotionValue(1);
   const offsetY = useMotionValue(1);
+
+  React.useEffect(() => {
+    if (
+      typeof document === "undefined" ||
+      typeof MutationObserver === "undefined"
+    ) {
+      return;
+    }
+
+    const root = document.documentElement;
+    const updateShouldRenderStars = () => {
+      setShouldRenderStars(root.classList.contains("dark"));
+    };
+
+    updateShouldRenderStars();
+
+    const observer = new MutationObserver(updateShouldRenderStars);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
 
   const springX = useSpring(offsetX, transition);
   const springY = useSpring(offsetY, transition);
@@ -114,43 +137,47 @@ function StarsBackground({
     <div
       data-slot="stars-background"
       className={cn(
-        "relative size-full overflow-hidden bg-[radial-gradient(ellipse_at_bottom,_#262626_0%,_#000_100%)]",
+        "relative size-full overflow-hidden",
+        shouldRenderStars &&
+          "bg-[radial-gradient(ellipse_at_bottom,_#262626_0%,_#000_100%)]",
         className
       )}
-      onMouseMove={handleMouseMove}
+      onMouseMove={shouldRenderStars ? handleMouseMove : undefined}
       {...props}
     >
-      <motion.div
-        style={{ x: springX, y: springY }}
-        className={cn({ "pointer-events-none": !pointerEvents })}
-      >
-        <StarLayer
-          count={1000}
-          size={1}
-          transition={{ repeat: Infinity, duration: speed, ease: "linear" }}
-          starColor={starColor}
-        />
-        <StarLayer
-          count={400}
-          size={2}
-          transition={{
-            repeat: Infinity,
-            duration: speed * 2,
-            ease: "linear",
-          }}
-          starColor={starColor}
-        />
-        <StarLayer
-          count={200}
-          size={3}
-          transition={{
-            repeat: Infinity,
-            duration: speed * 3,
-            ease: "linear",
-          }}
-          starColor={starColor}
-        />
-      </motion.div>
+      {shouldRenderStars ? (
+        <motion.div
+          style={{ x: springX, y: springY }}
+          className={cn({ "pointer-events-none": !pointerEvents })}
+        >
+          <StarLayer
+            count={1000}
+            size={1}
+            transition={{ repeat: Infinity, duration: speed, ease: "linear" }}
+            starColor={starColor}
+          />
+          <StarLayer
+            count={400}
+            size={2}
+            transition={{
+              repeat: Infinity,
+              duration: speed * 2,
+              ease: "linear",
+            }}
+            starColor={starColor}
+          />
+          <StarLayer
+            count={200}
+            size={3}
+            transition={{
+              repeat: Infinity,
+              duration: speed * 3,
+              ease: "linear",
+            }}
+            starColor={starColor}
+          />
+        </motion.div>
+      ) : null}
       {children}
     </div>
   );
