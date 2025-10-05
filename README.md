@@ -14,7 +14,7 @@ A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-pow
 
 ## ✨ Features
 
-- 📸 **AI Receipt Scanning** - Extract expense details from photos using Google Gemini 2.5 Flash
+- 📸 **AI Receipt Scanning** - Extract expense details from photos using Gemini 2.5 (Pro, Flash, or Flash Lite)
 - 💰 **Expense Tracking** - Manage expenses with categories, amounts, and notes
 - 🔐 **Secure Auth** - JWT-based authentication with bcrypt password hashing
 - 🌓 **Dark/Light Theme** - Beautiful UI with theme persistence

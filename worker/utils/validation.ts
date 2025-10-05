@@ -22,14 +22,14 @@ export const apiKeySchema = z.object({
 export const expenseSchema = z.object({
     merchant: z.string().min(1, 'Merchant is required'),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-    total: z.number().positive('Total must be positive'),
+    total: z.number().min(0, 'Total must be a non-negative number'),
     currency: z.string().length(3, 'Currency must be a 3-letter ISO code'),
     category: z.enum(['Food & Drink', 'Groceries', 'Travel', 'Shopping', 'Utilities', 'Other']),
     lineItems: z.array(
         z.object({
             description: z.string().min(1, 'Description is required'),
             quantity: z.number().positive('Quantity must be a positive number'),
-            price: z.number().positive('Price must be positive'),
+            price: z.number().min(0, 'Price must be non-negative'),
         })
     ),
 });
