@@ -22,6 +22,11 @@ A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-pow
 - 🔒 **End-to-End Security** - Encrypted API keys and secure token storage
 - ⚡ **Edge-First** - Deployed on Cloudflare's global network
 
+<figure>
+  <img src="images/add_expense.png" alt="Add Expense form with receipt scanning" width="800">
+  <figcaption><strong>AI Receipt Scanning</strong>: add an expense from a photo; fields are auto-filled.</figcaption>
+</figure>
+
 ## 🚀 Quick Start
 
 ```bash
@@ -44,23 +49,10 @@ pnpm dev:full
 
 Visit http://localhost:3000 to get started!
 
-## 📸 Screenshots
-
-<div align="center">
-
-### Dashboard
-
-![Dashboard View](images/dashboard.png)
-
-### Home Page
-
-![Home Page](images/home_page.png)
-
-### Add Expense
-
-![Add Expense](images/add_expense.png)
-
-</div>
+<figure>
+  <img src="images/home_page.png" alt="Home page on first run" width="800">
+  <figcaption>First run: Home page shown after starting the dev server.</figcaption>
+</figure>
 
 ## 🛠️ Tech Stack
 
