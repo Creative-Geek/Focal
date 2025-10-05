@@ -14,7 +14,10 @@ const Header: React.FC = () => {
     <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-40 border-b">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <NavLink to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+          <NavLink
+            to="/home"
+            className="flex items-center gap-1.5 sm:gap-2 group"
+          >
             <img
               src="/focal-icon.svg"
               alt="Focal"
@@ -28,7 +31,7 @@ const Header: React.FC = () => {
           </NavLink>
           <nav className="hidden sm:flex items-center space-x-6">
             <NavLink
-              to="/"
+              to="/home"
               className={({ isActive }) =>
                 cn(
                   "font-semibold transition-colors duration-200",
@@ -111,7 +114,7 @@ const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
     );
   return (
     <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t h-16 z-40 flex items-center justify-around safe-area-inset-bottom">
-      <NavLink to="/" className={getLinkClass("/")}>
+      <NavLink to="/home" className={getLinkClass("/home")}>
         <Home className="h-6 w-6" />
         <span className="text-xs font-medium">Scan</span>
       </NavLink>
@@ -141,7 +144,7 @@ export const Layout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
       <Header />
       <main className="flex-grow pb-20 sm:pb-0">
         <Outlet />

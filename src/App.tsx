@@ -3,15 +3,26 @@ import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import { HomePage } from "@/pages/HomePage";
 import { ExpensesPage } from "@/pages/ExpensesPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { LandingPage } from "@/pages/LandingPage";
 import { Layout } from "@/components/Layout";
+import { MainLayout } from "@/components/MainLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const router = createBrowserRouter([
   {
-    path: "/login",
-    element: <LoginPage />,
+    element: <MainLayout />,
     errorElement: <RouteErrorBoundary />,
+    children: [
+      {
+        path: "/",
+        element: <LandingPage />,
+      },
+      {
+        path: "/login",
+        element: <LoginPage />,
+      },
+    ],
   },
   {
     element: <ProtectedRoute />,
@@ -21,7 +32,7 @@ const router = createBrowserRouter([
         element: <Layout />,
         children: [
           {
-            path: "/",
+            path: "/home",
             element: <HomePage />,
           },
           {

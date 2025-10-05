@@ -46,6 +46,13 @@ import type { Expense } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -110,6 +117,15 @@ export const ExpensesPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<number>();
+    expenses.forEach((exp) => yearsSet.add(new Date(exp.date).getFullYear()));
+    return Array.from(yearsSet)
+      .sort((a, b) => b - a)
+      .map(String);
+  }, [expenses]);
   // Track which expenses are expanded to show line items
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -160,13 +176,28 @@ export const ExpensesPage: React.FC = () => {
     fetchExpenses();
   }, []);
   const filteredExpenses = useMemo(() => {
-    if (!searchTerm) return expenses;
-    return expenses.filter(
+    // Apply month/year filter first
+    let base = expenses;
+    if (selectedYear !== "all" || selectedMonth !== "all") {
+      base = base.filter((expense) => {
+        const d = new Date(expense.date);
+        const year = String(d.getFullYear());
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const yearOk = selectedYear === "all" || year === selectedYear;
+        const monthOk = selectedMonth === "all" || month === selectedMonth;
+        return yearOk && monthOk;
+      });
+    }
+
+    // Then apply search filter
+    if (!searchTerm) return base;
+    const q = searchTerm.toLowerCase();
+    return base.filter(
       (expense) =>
-        expense.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.category.toLowerCase().includes(searchTerm.toLowerCase())
+        expense.merchant.toLowerCase().includes(q) ||
+        expense.category.toLowerCase().includes(q)
     );
-  }, [expenses, searchTerm]);
+  }, [expenses, searchTerm, selectedMonth, selectedYear]);
   const handleDelete = async (id: string) => {
     const response = await expenseService.deleteExpense(id);
     if (response.success) {
@@ -374,14 +405,53 @@ export const ExpensesPage: React.FC = () => {
             </Card>
           </div>
           <div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by merchant or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 sm:pl-10 w-full md:w-1/2 lg:w-1/3 text-sm sm:text-base"
-              />
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3">
+              <div className="w-full md:w-48">
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All months</SelectItem>
+                    <SelectItem value="01">January</SelectItem>
+                    <SelectItem value="02">February</SelectItem>
+                    <SelectItem value="03">March</SelectItem>
+                    <SelectItem value="04">April</SelectItem>
+                    <SelectItem value="05">May</SelectItem>
+                    <SelectItem value="06">June</SelectItem>
+                    <SelectItem value="07">July</SelectItem>
+                    <SelectItem value="08">August</SelectItem>
+                    <SelectItem value="09">September</SelectItem>
+                    <SelectItem value="10">October</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">December</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full md:w-40">
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All years</SelectItem>
+                    {availableYears.map((y) => (
+                      <SelectItem key={y} value={y}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Search by merchant or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 sm:pl-10 w-full text-sm sm:text-base"
+                />
+              </div>
             </div>
           </div>
           {/* Desktop Table */}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { motion, Variants } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -49,9 +50,36 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
     setIsLoading(false);
   };
 
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+      },
+    },
+  };
+
   return (
-    <div className="w-full max-w-md space-y-6">
-      <div className="text-center">
+    <motion.div
+      className="w-full max-w-md space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div className="text-center" variants={itemVariants}>
         <h1 className="text-3xl font-bold tracking-tight">
           {mode === "login" ? "Welcome back" : "Create an account"}
         </h1>
@@ -60,10 +88,14 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
             ? "Enter your credentials to access your account"
             : "Sign up to start tracking your expenses"}
         </p>
-      </div>
+      </motion.div>
 
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-        <div className="space-y-2">
+      <motion.form
+        onSubmit={handleSubmit(onFormSubmit)}
+        className="space-y-4"
+        variants={containerVariants}
+      >
+        <motion.div className="space-y-2" variants={itemVariants}>
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -76,9 +108,9 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
-        </div>
+        </motion.div>
 
-        <div className="space-y-2">
+        <motion.div className="space-y-2" variants={itemVariants}>
           <Label htmlFor="password">Password</Label>
           <Input
             id="password"
@@ -95,25 +127,29 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
               {errors.password.message}
             </p>
           )}
-        </div>
+        </motion.div>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <motion.div variants={itemVariants}>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </motion.div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading
-            ? "Please wait..."
-            : mode === "login"
-            ? "Sign in"
-            : "Sign up"}
-        </Button>
-      </form>
+        <motion.div variants={itemVariants}>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading
+              ? "Please wait..."
+              : mode === "login"
+              ? "Sign in"
+              : "Sign up"}
+          </Button>
+        </motion.div>
+      </motion.form>
 
-      <div className="text-center text-sm">
+      <motion.div className="text-center text-sm" variants={itemVariants}>
         <span className="text-muted-foreground">
           {mode === "login"
             ? "Don't have an account? "
@@ -127,7 +163,7 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
         >
           {mode === "login" ? "Sign up" : "Sign in"}
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
