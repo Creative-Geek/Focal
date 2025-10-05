@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
 import { AuthService } from '../services/auth.service';
+import { BrevoService } from '../services/brevo.service';
 import { validateRequest, signupSchema, loginSchema } from '../utils/validation';
 import { success, error, json } from '../utils/response';
 
@@ -41,7 +42,34 @@ export async function signup(c: Context<{ Bindings: Env }>) {
     const userId = crypto.randomUUID();
     const user = await dbService.createUser(userId, email, passwordHash);
 
-    // Generate JWT token
+    // Generate verification token (24 hour expiry)
+    const verificationToken = authService.generateVerificationToken();
+    const verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    await dbService.setVerificationToken(userId, verificationToken, verificationExpires);
+
+    // Send verification email via Brevo
+    if (env.BREVO_API_KEY) {
+        const brevoService = new BrevoService(env.BREVO_API_KEY);
+        const appUrl = env.APP_URL || 'http://localhost:3000';
+
+        const emailResult = await brevoService.sendVerificationEmail(
+            email,
+            email.split('@')[0], // Use email username as name
+            verificationToken,
+            appUrl
+        );
+
+        if (!emailResult.success) {
+            console.error('[Signup] Failed to send verification email:', emailResult.error);
+            // Continue with signup even if email fails
+        } else {
+            console.log('[Signup] Verification email sent:', emailResult.messageId);
+        }
+    } else {
+        console.warn('[Signup] BREVO_API_KEY not configured - email verification disabled');
+    }
+
+    // Generate JWT token (but user must verify email to use protected routes)
     const token = authService.generateToken({
         userId: user.id,
         email: user.email,
@@ -70,8 +98,10 @@ export async function signup(c: Context<{ Bindings: Env }>) {
             user: {
                 id: user.id,
                 email: user.email,
+                emailVerified: false,
             },
             token,
+            message: 'Account created. Please check your email to verify your account.',
         }),
         201
     );
@@ -181,7 +211,88 @@ export async function me(c: Context<{ Bindings: Env; Variables: Variables }>) {
         success({
             id: user.id,
             email: user.email,
+            emailVerified: user.email_verified === 1,
             created_at: user.created_at,
         })
     );
+}
+
+/**
+ * GET /api/auth/verify/:token
+ * Verify email address with token
+ */
+export async function verifyEmail(c: Context<{ Bindings: Env }>) {
+    const env = c.env;
+    const token = c.req.param('token');
+
+    if (!token) {
+        return error('Verification token is required', 400);
+    }
+
+    const dbService = new DBService(env.DB);
+    const result = await dbService.verifyEmail(token);
+
+    if (!result.success) {
+        return error(result.error || 'Verification failed', 400);
+    }
+
+    return json(
+        success(
+            { userId: result.userId },
+            'Email verified successfully! You can now use all features.'
+        )
+    );
+}
+
+/**
+ * POST /api/auth/resend-verification
+ * Resend verification email
+ */
+export async function resendVerification(c: Context<{ Bindings: Env; Variables: Variables }>) {
+    const env = c.env;
+    const userId = c.get('userId');
+    const dbService = new DBService(env.DB);
+    const authService = new AuthService(env.JWT_SECRET);
+
+    // Get user
+    const user = await dbService.getUserById(userId);
+    if (!user) {
+        return error('User not found', 404);
+    }
+
+    // Check if already verified
+    if (user.email_verified === 1) {
+        return error('Email already verified', 400);
+    }
+
+    // Generate new verification token
+    const verificationToken = authService.generateVerificationToken();
+    const verificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    await dbService.resendVerificationToken(userId, verificationToken, verificationExpires);
+
+    // Send verification email
+    if (env.BREVO_API_KEY) {
+        const brevoService = new BrevoService(env.BREVO_API_KEY);
+        const appUrl = env.APP_URL || 'http://localhost:3000';
+
+        const emailResult = await brevoService.sendVerificationEmail(
+            user.email,
+            user.email.split('@')[0],
+            verificationToken,
+            appUrl
+        );
+
+        if (!emailResult.success) {
+            console.error('[Brevo] Failed to send verification email:', emailResult.error);
+            return error('Failed to send verification email', 500);
+        }
+
+        return json(
+            success({
+                message: 'Verification email sent. Please check your inbox.',
+            })
+        );
+    } else {
+        return error('Email service not configured', 500);
+    }
 }

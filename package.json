@@ -18,6 +18,7 @@
     "setup:prod": "bash scripts/setup-production.sh"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.4",
     "@hono/node-server": "^1.19.5",

@@ -22,3 +22,5 @@ NODE_ENV = "production"
 # Production secrets (set using wrangler secret put):
 # JWT_SECRET - Secret key for JWT token signing
 # ENCRYPTION_KEY - Key for encrypting API keys in database
+# BREVO_API_KEY - (Optional) Brevo API key for sending transactional emails
+# APP_URL - (Optional) Application URL for email verification links (e.g., https://focal-expense.app)

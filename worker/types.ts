@@ -6,12 +6,17 @@ export interface Env {
     JWT_SECRET: string;
     ENCRYPTION_KEY: string;
     NODE_ENV: string;
+    BREVO_API_KEY?: string; // Optional: Brevo API key for sending transactional emails
+    APP_URL?: string; // Optional: Application URL for email links (defaults to localhost in dev)
 }
 
 export interface User {
     id: string;
     email: string;
     password_hash: string;
+    email_verified?: number; // 0 or 1 (SQLite boolean)
+    verification_token?: string | null;
+    verification_token_expires?: number | null;
     created_at: number;
     updated_at: number;
 }

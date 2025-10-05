@@ -36,7 +36,9 @@ import { useNavigate } from "react-router-dom";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExpenseForm } from "@/components/ExpenseForm";
+import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import { resizeImage } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 const videoConstraints = {
   width: 1280,
   height: 720,
@@ -145,6 +147,8 @@ export const HomePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
   const fetchUserCurrency = async () => {
     try {
       const token = localStorage.getItem("auth_token");
@@ -265,6 +269,14 @@ export const HomePage: React.FC = () => {
       <div className="relative flex-grow flex flex-col items-center justify-center bg-background text-foreground px-3 sm:px-4 py-8 overflow-hidden w-full">
         <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem] dark:bg-neutral-950 dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)]"></div>
         <div className="absolute inset-0 bg-hero-gradient -z-10" />
+
+        {/* Email Verification Banner */}
+        {user && user.emailVerified === false && (
+          <div className="w-full max-w-4xl mb-6 z-20">
+            <EmailVerificationBanner />
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

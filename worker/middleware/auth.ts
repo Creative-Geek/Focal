@@ -73,6 +73,36 @@ export async function authMiddleware(c: Context<{ Bindings: Env; Variables: Vari
         return c.json({ success: false, error: 'Unauthorized - Session expired' }, 401);
     }
 
+    // Check if email is verified (optional - can be enforced per route)
+    const user = await dbService.getUserById(payload.userId);
+    if (!user) {
+        return c.json({ success: false, error: 'Unauthorized - User not found' }, 401);
+    }
+
+    // Check email verification status
+    if (env.BREVO_API_KEY && user.email_verified !== 1) {
+        // Only enforce verification if Brevo is configured
+        const path = new URL(c.req.url).pathname;
+
+        // Allow access to certain routes even without verification
+        const allowedPaths = [
+            '/api/auth/me',
+            '/api/auth/logout',
+            '/api/auth/resend-verification',
+            '/api/auth/verify'
+        ];
+
+        const isAllowed = allowedPaths.some(p => path.startsWith(p));
+
+        if (!isAllowed) {
+            return c.json({
+                success: false,
+                error: 'Email verification required',
+                code: 'EMAIL_NOT_VERIFIED'
+            }, 403);
+        }
+    }
+
     // Attach user info to context
     c.set('userId', payload.userId);
     c.set('userEmail', payload.email);

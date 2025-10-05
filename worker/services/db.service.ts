@@ -236,4 +236,59 @@ export class DBService {
             .bind(now)
             .run();
     }
+
+    // ============ EMAIL VERIFICATION OPERATIONS ============
+
+    async setVerificationToken(userId: string, token: string, expiresAt: number): Promise<void> {
+        await this.db
+            .prepare('UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?')
+            .bind(token, expiresAt, userId)
+            .run();
+    }
+
+    async verifyEmail(token: string): Promise<{ success: boolean; userId?: string; error?: string }> {
+        const now = Date.now();
+
+        // Find user by verification token
+        const user = await this.db
+            .prepare('SELECT id, email, verification_token_expires, email_verified FROM users WHERE verification_token = ?')
+            .bind(token)
+            .first<{ id: string; email: string; verification_token_expires: number; email_verified: number }>();
+
+        if (!user) {
+            return { success: false, error: 'Invalid verification token' };
+        }
+
+        if (user.email_verified === 1) {
+            return { success: false, error: 'Email already verified' };
+        }
+
+        if (user.verification_token_expires < now) {
+            return { success: false, error: 'Verification token expired' };
+        }
+
+        // Mark email as verified and clear token
+        await this.db
+            .prepare('UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expires = NULL WHERE id = ?')
+            .bind(user.id)
+            .run();
+
+        return { success: true, userId: user.id };
+    }
+
+    async isEmailVerified(userId: string): Promise<boolean> {
+        const result = await this.db
+            .prepare('SELECT email_verified FROM users WHERE id = ?')
+            .bind(userId)
+            .first<{ email_verified: number }>();
+
+        return result?.email_verified === 1;
+    }
+
+    async resendVerificationToken(userId: string, token: string, expiresAt: number): Promise<void> {
+        await this.db
+            .prepare('UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?')
+            .bind(token, expiresAt, userId)
+            .run();
+    }
 }

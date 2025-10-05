@@ -18,6 +18,8 @@ export function createRouter() {
     app.post('/auth/login', authHandler.login);
     app.post('/auth/logout', authMiddleware, authHandler.logout);
     app.get('/auth/me', authMiddleware, authHandler.me);
+    app.get('/auth/verify/:token', authHandler.verifyEmail);
+    app.post('/auth/resend-verification', authMiddleware, authHandler.resendVerification);
 
     // ============ EXPENSE ROUTES (Protected) ============
     app.get('/expenses', authMiddleware, expensesHandler.getExpenses);

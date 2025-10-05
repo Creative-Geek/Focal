@@ -56,4 +56,14 @@ export class AuthService {
         // 7 days from now in milliseconds
         return Date.now() + 7 * 24 * 60 * 60 * 1000;
     }
+
+    /**
+     * Generate a secure verification token
+     */
+    generateVerificationToken(): string {
+        // Generate a random token using crypto
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
 }

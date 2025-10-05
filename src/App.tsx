@@ -4,6 +4,7 @@ import { HomePage } from "@/pages/HomePage";
 import { ExpensesPage } from "@/pages/ExpensesPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { LandingPage } from "@/pages/LandingPage";
+import VerifyEmailPage from "@/pages/VerifyEmailPage";
 import { Layout } from "@/components/Layout";
 import { MainLayout } from "@/components/MainLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/verify",
+        element: <VerifyEmailPage />,
       },
     ],
   },
