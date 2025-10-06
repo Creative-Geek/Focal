@@ -56,7 +56,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
     onChangeRef.current({ ...valueRef.current, lineItems: newLineItems });
   }, []);
   return (
-    <div className="space-y-3 sm:space-y-4 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto px-1 sm:pr-2 py-2 sm:py-4">
+    <div className="space-y-3 sm:space-y-4 overflow-y-auto px-1 sm:pr-2 py-2 sm:py-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
           <Label htmlFor="merchant" className="text-sm">
