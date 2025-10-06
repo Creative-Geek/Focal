@@ -327,4 +327,35 @@ export class DBService {
             .bind(hashedPassword, userId)
             .run();
     }
+
+    // ============ RATE LIMITING OPERATIONS ============
+
+    /**
+     * Adds a record of a rate-limited action.
+     * The `created_at` timestamp is automatically set by the database in seconds.
+     */
+    async addRateLimitRequest(action: string, identifier: string): Promise<void> {
+        const id = crypto.randomUUID();
+        await this.db
+            .prepare('INSERT INTO rate_limits (id, action, identifier) VALUES (?, ?, ?)')
+            .bind(id, action, identifier)
+            .run();
+    }
+
+    /**
+     * Retrieves recent requests for a given action and identifier.
+     * @param windowStart - The start of the time window in milliseconds.
+     * @returns A list of request timestamps.
+     */
+    async getRateLimitRequests(action: string, identifier: string, windowStart: number): Promise<{ created_at: number }[]> {
+        // Convert window from milliseconds to seconds to match the database schema
+        const windowStartSeconds = Math.floor(windowStart / 1000);
+
+        const result = await this.db
+            .prepare('SELECT created_at FROM rate_limits WHERE action = ? AND identifier = ? AND created_at > ?')
+            .bind(action, identifier, windowStartSeconds)
+            .all<{ created_at: number }>();
+
+        return result.results || [];
+    }
 }

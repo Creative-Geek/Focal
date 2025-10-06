@@ -6,7 +6,7 @@ export { }; // make this a module
 self.addEventListener('message', (event) => {
     // Allow page to trigger immediate activation
     if (event.data && event.data.type === 'SKIP_WAITING') {
-        // @ts-ignore
+        // @ts-expect-error - Service worker context
         self.skipWaiting?.();
     }
 });
@@ -17,7 +17,7 @@ self.addEventListener('install', () => {
 
 self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
-        // @ts-ignore
+        // @ts-expect-error - Service worker context
         await self.clients?.claim?.();
     })());
 });
