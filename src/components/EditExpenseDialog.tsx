@@ -73,7 +73,7 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
+        <DrawerContent className="max-h-[85vh]">
           <DrawerHeader>
             <DrawerTitle>Edit Expense</DrawerTitle>
             <DrawerDescription>
@@ -82,11 +82,11 @@ export const EditExpenseDialog: React.FC<EditExpenseDialogProps> = ({
             </DrawerDescription>
           </DrawerHeader>
           {editedData && (
-            <div className="px-4">
+            <div className="px-4 overflow-y-auto">
               <ExpenseForm value={editedData} onChange={setEditedData} />
             </div>
           )}
-          <DrawerFooter>
+          <DrawerFooter className="pt-2 gap-2">
             <DrawerClose asChild>
               <Button variant="outline" disabled={isSaving}>
                 Cancel
