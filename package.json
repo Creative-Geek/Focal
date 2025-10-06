@@ -70,6 +70,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.60.0",
     "react-hotkeys-hook": "^5.1.0",
+    "react-resizable-panels": "^3.0.6",
     "react-router-dom": "6.30.0",
     "react-select": "^5.10.2",
     "react-use": "^17.6.0",

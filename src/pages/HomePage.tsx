@@ -21,6 +21,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Drawer,
   DrawerContent,
   DrawerHeader,
@@ -33,7 +43,6 @@ import { Toaster, toast } from "sonner";
 import { expenseService, ExpenseData } from "@/lib/expense-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
-import { SettingsDialog } from "@/components/SettingsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
@@ -53,6 +62,7 @@ function ReviewForm(props: {
   extractedData: ExpenseData | null;
   setExtractedData: (data: ExpenseData | null) => void;
   handleSave: () => void;
+  originalData: ExpenseData | null;
 }) {
   const {
     isMobile,
@@ -61,77 +71,128 @@ function ReviewForm(props: {
     extractedData,
     setExtractedData,
     handleSave,
+    originalData,
   } = props;
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    if (originalData && extractedData) {
+      setIsDirty(JSON.stringify(originalData) !== JSON.stringify(extractedData));
+    } else {
+      setIsDirty(false);
+    }
+  }, [extractedData, originalData]);
+
+  const handleCloseAttempt = () => {
+    if (isDirty && !isSaving) {
+      setIsConfirmationOpen(true);
+    } else {
+      setExtractedData(null);
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setExtractedData(null);
+    setIsConfirmationOpen(false);
+    setIsDirty(false);
+  };
+
   const Wrapper = isMobile ? Drawer : Dialog;
   const Content = isMobile ? DrawerContent : DialogContent;
   const Header = isMobile ? DrawerHeader : DialogHeader;
   const Title = isMobile ? DrawerTitle : DialogTitle;
   const Description = isMobile ? DrawerDescription : DialogDescription;
   const Footer = isMobile ? DrawerFooter : DialogFooter;
-  const Close = isMobile ? DrawerClose : DialogClose;
+
   return (
-    <Wrapper
-      open={isProcessing || !!extractedData}
-      onOpenChange={(open) => {
-        if (!open && !isSaving) {
-          setExtractedData(null);
-        }
-      }}
-    >
-      <Content
-        className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
-        onPointerDownOutside={(e) => {
-          if (isSaving) {
-            e.preventDefault();
-          }
-        }}
-        onInteractOutside={(e) => {
-          if (isSaving) {
-            e.preventDefault();
+    <>
+      <Wrapper
+        open={isProcessing || !!extractedData}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseAttempt();
           }
         }}
       >
-        <Header className={isMobile ? "pb-2" : ""}>
-          <Title className="text-lg sm:text-xl">
-            {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
-          </Title>
-          <Description className="text-sm">
-            {isProcessing
-              ? "Please wait while we extract the details from your receipt."
-              : "Review and edit the extracted details before saving."}
-          </Description>
-        </Header>
-        {isProcessing ? (
-          <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
-            <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Our AI is hard at work...
-            </p>
-          </div>
-        ) : (
-          extractedData && (
-            <div className="px-3 sm:px-4 overflow-y-auto">
-              <ExpenseForm value={extractedData} onChange={setExtractedData} />
+        <Content
+          className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
+          onPointerDownOutside={(e) => {
+            if (isSaving) e.preventDefault();
+            if (isDirty) {
+              e.preventDefault();
+              handleCloseAttempt();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if (isSaving) e.preventDefault();
+          }}
+          // The escape key is handled by onOpenChange
+        >
+          <Header className={isMobile ? "pb-2" : ""}>
+            <Title className="text-lg sm:text-xl">
+              {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
+            </Title>
+            <Description className="text-sm">
+              {isProcessing
+                ? "Please wait while we extract the details from your receipt."
+                : "Review and edit the extracted details before saving."}
+            </Description>
+          </Header>
+          {isProcessing ? (
+            <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
+              <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Our AI is hard at work...
+              </p>
             </div>
-          )
-        )}
-        <Footer className={isMobile ? "pt-2 gap-2" : ""}>
-          <Close asChild>
-            <Button variant="outline" disabled={isSaving}>
+          ) : (
+            extractedData && (
+              <div className="px-3 sm:px-4 overflow-y-auto">
+                <ExpenseForm value={extractedData} onChange={setExtractedData} />
+              </div>
+            )
+          )}
+          <Footer className={isMobile ? "pt-2 gap-2" : ""}>
+            <Button
+              variant="outline"
+              disabled={isSaving}
+              onClick={handleCloseAttempt}
+            >
               Cancel
             </Button>
-          </Close>
-          <Button onClick={handleSave} disabled={isProcessing || isSaving}>
-            {isSaving ? (
-              <Loader className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Expense
-          </Button>
-        </Footer>
-      </Content>
-    </Wrapper>
+            <Button onClick={handleSave} disabled={isProcessing || isSaving || !isDirty}>
+              {isSaving ? (
+                <Loader className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Expense
+            </Button>
+          </Footer>
+        </Content>
+      </Wrapper>
+      <AlertDialog open={isConfirmationOpen} onOpenChange={setIsConfirmationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to discard your changes? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmClose}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -140,8 +201,8 @@ export const HomePage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [extractedData, setExtractedData] = useState<ExpenseData | null>(null);
+  const [originalData, setOriginalData] = useState<ExpenseData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -183,11 +244,12 @@ export const HomePage: React.FC = () => {
 
       const response = await expenseService.processReceipt(resizedImage);
       if (response.success && response.data) {
-        // Currency is now always provided by the backend from user settings
-        setExtractedData({
+        const data = {
           ...response.data,
           lineItems: response.data.lineItems || [],
-        });
+        };
+        setExtractedData(data);
+        setOriginalData(data);
       } else {
         setError(response.error || "Failed to extract data from receipt.");
         toast.error("Processing Failed", { description: response.error });
@@ -225,16 +287,17 @@ export const HomePage: React.FC = () => {
   };
 
   const handleManualEntry = () => {
-    // Open the review form with default/empty expense data
     const today = new Date().toISOString().split("T")[0];
-    setExtractedData({
+    const newData = {
       merchant: "",
       date: today,
       total: 0,
       currency: defaultCurrency,
       category: "Other",
       lineItems: [{ description: "", quantity: 1, price: 0 }],
-    });
+    };
+    setExtractedData(newData);
+    setOriginalData(newData);
   };
   const handleSave = async () => {
     if (extractedData && !isSaving) {
@@ -290,31 +353,31 @@ export const HomePage: React.FC = () => {
             Instantly capture, analyze, and organize your expenses with a single
             photo. The fastest way to track your spending.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-sm sm:max-w-2xl mx-auto px-4 sm:px-6">
             <Button
               size="lg"
               onClick={() => setIsCameraOpen(true)}
-              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white w-full sm:w-auto"
             >
-              <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+              <Camera className="mr-3 h-5 w-5" />
               Scan Receipt
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              className="w-full sm:w-auto"
             >
-              <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+              <Upload className="mr-3 h-5 w-5" />
               Upload Photo
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={handleManualEntry}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              className="w-full sm:w-auto"
             >
-              <PenLine className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+              <PenLine className="mr-3 h-5 w-5" />
               Manual Entry
             </Button>
             <input
@@ -389,19 +452,7 @@ export const HomePage: React.FC = () => {
         extractedData={extractedData}
         setExtractedData={setExtractedData}
         handleSave={handleSave}
-      />
-      <SettingsDialog
-        open={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
-        onSave={() => {
-          fetchUserCurrency();
-          // Refresh can be handled here if needed
-          // For now, the API key will be available immediately for next processing
-          toast.success("Ready to scan", {
-            description:
-              "Your API key is configured. You can now scan receipts.",
-          });
-        }}
+        originalData={originalData}
       />
     </>
   );

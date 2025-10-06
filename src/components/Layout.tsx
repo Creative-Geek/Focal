@@ -3,7 +3,6 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Settings, Home, Wallet, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
-import { SettingsDialog } from "./SettingsDialog";
 import { Button } from "./ui/button";
 import { UserMenu } from "./UserMenu";
 const Header: React.FC = () => {
@@ -77,9 +76,7 @@ const Header: React.FC = () => {
     </header>
   );
 };
-const Footer: React.FC<{ onSettingsClick: () => void }> = ({
-  onSettingsClick,
-}) => {
+const Footer: React.FC = () => {
   return (
     <footer className="bg-background border-t hidden sm:block">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -88,9 +85,11 @@ const Footer: React.FC<{ onSettingsClick: () => void }> = ({
             Built with ❤️ at Cloudflare. All expenses are stored locally in your
             browser.
           </p>
-          <Button variant="ghost" size="sm" onClick={onSettingsClick}>
-            <Settings className="h-4 w-4 mr-2" />
-            API Key Settings
+          <Button variant="ghost" size="sm" asChild>
+            <NavLink to="/settings">
+              <Settings className="h-4 w-4 mr-2" />
+              API Key Settings
+            </NavLink>
           </Button>
         </div>
         <p className="mt-2 text-xs text-gray-400">
@@ -101,9 +100,7 @@ const Footer: React.FC<{ onSettingsClick: () => void }> = ({
     </footer>
   );
 };
-const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
-  onSettingsClick,
-}) => {
+const BottomNav: React.FC = () => {
   const location = useLocation();
   const activeLinkClass = "text-focal-blue-500";
   const inactiveLinkClass = "text-gray-500 dark:text-gray-400";
@@ -122,40 +119,22 @@ const BottomNav: React.FC<{ onSettingsClick: () => void }> = ({
         <Wallet className="h-6 w-6" />
         <span className="text-xs font-medium">Expenses</span>
       </NavLink>
-      <button
-        onClick={onSettingsClick}
-        className={cn(
-          "flex flex-col items-center gap-1 transition-colors duration-200 w-1/3",
-          inactiveLinkClass
-        )}
-      >
+      <NavLink to="/settings" className={getLinkClass("/settings")}>
         <Settings className="h-6 w-6" />
         <span className="text-xs font-medium">Settings</span>
-      </button>
+      </NavLink>
     </nav>
   );
 };
 export const Layout: React.FC = () => {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  const handleSettingsSave = () => {
-    // Settings saved - no need to refresh expenses here
-    // Each page will handle its own data fetching
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
       <Header />
       <main className="flex-grow pb-20 sm:pb-0">
         <Outlet />
       </main>
-      <Footer onSettingsClick={() => setIsSettingsOpen(true)} />
-      <BottomNav onSettingsClick={() => setIsSettingsOpen(true)} />
-      <SettingsDialog
-        open={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
-        onSave={handleSettingsSave}
-      />
+      <Footer />
+      <BottomNav />
     </div>
   );
 };
