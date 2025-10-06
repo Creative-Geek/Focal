@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -22,7 +14,7 @@ import {
 import { useModel } from "@/hooks/use-model";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
-const MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const MODELS = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-latest"];
 const API_BASE_URL = "/api";
 
 // Helper to get auth headers
@@ -37,29 +29,17 @@ const getAuthHeaders = (): HeadersInit => {
   return headers;
 };
 
-interface SettingsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave?: () => void; // Callback after successful save
-}
-
-export const SettingsDialog: React.FC<SettingsDialogProps> = ({
-  open,
-  onOpenChange,
-  onSave,
-}) => {
+export const SettingsPage: React.FC = () => {
   const [apiKey, setApiKey] = useState("");
   const [currency, setCurrency] = useState("USD");
   const { model, setModel } = useModel();
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasExistingKey, setHasExistingKey] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      loadSettings();
-    }
-  }, [open]);
+    loadSettings();
+  }, []);
 
   const loadSettings = async () => {
     setIsLoading(true);
@@ -135,12 +115,6 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
           });
           setApiKey(""); // Clear the input
           setHasExistingKey(true);
-          onOpenChange(false);
-
-          // Trigger refresh callback if provided
-          if (onSave) {
-            onSave();
-          }
         } else {
           throw new Error("Failed to save settings");
         }
@@ -154,56 +128,57 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
       setIsSaving(false);
     }
   };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>
-            Manage your application settings. Your API key is encrypted and
-            stored securely on the server.
-          </DialogDescription>
-        </DialogHeader>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader className="h-6 w-6 animate-spin" />
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="api-key" className="text-right col-span-1">
-                  API Key
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <Input
-                    id="api-key"
-                    type="text"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    autoCapitalize="none"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={
-                      hasExistingKey
-                        ? "••••••••••••••••"
-                        : "Enter your Gemini API key"
-                    }
-                  />
-                  {hasExistingKey && (
-                    <p className="text-xs text-muted-foreground">
-                      API key is configured. Enter a new key to update.
-                    </p>
-                  )}
-                </div>
+    <div className="container max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <header className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          Manage your application settings. Your API key is encrypted and
+          stored securely on the server.
+        </p>
+      </header>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="h-8 w-8 animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="grid gap-6">
+            <div className="grid md:grid-cols-3 items-start gap-4">
+              <Label htmlFor="api-key" className="md:text-right md:mt-2">
+                API Key
+              </Label>
+              <div className="md:col-span-2 space-y-2">
+                <Input
+                  id="api-key"
+                  type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder={
+                    hasExistingKey
+                      ? "••••••••••••••••"
+                      : "Enter your Gemini API key"
+                  }
+                />
+                {hasExistingKey && (
+                  <p className="text-xs text-muted-foreground">
+                    API key is configured. Enter a new key to update.
+                  </p>
+                )}
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="currency" className="text-right col-span-1">
-                  Currency
-                </Label>
+            </div>
+            <div className="grid md:grid-cols-3 items-center gap-4">
+              <Label htmlFor="currency" className="md:text-right">
+                Currency
+              </Label>
+              <div className="md:col-span-2">
                 <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select a currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -215,12 +190,14 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="model" className="text-right col-span-1">
-                  Model
-                </Label>
+            </div>
+            <div className="grid md:grid-cols-3 items-center gap-4">
+              <Label htmlFor="model" className="md:text-right">
+                Model
+              </Label>
+              <div className="md:col-span-2">
                 <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
@@ -233,19 +210,19 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+          </div>
+          <footer className="flex justify-end pt-4">
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save Changes
+            </Button>
+          </footer>
+        </div>
+      )}
+    </div>
   );
 };
