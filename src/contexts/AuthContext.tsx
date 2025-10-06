@@ -17,6 +17,9 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
+  forgotPassword: (
+    email: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -127,6 +130,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const forgotPassword = async (email: string) => {
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          error: data.error || "Failed to send reset email",
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || "Failed to send reset email",
+      };
+    }
+  };
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", {
@@ -144,7 +175,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, checkAuth }}
+      value={{
+        user,
+        loading,
+        login,
+        signup,
+        forgotPassword,
+        logout,
+        checkAuth,
+      }}
     >
       {children}
     </AuthContext.Provider>

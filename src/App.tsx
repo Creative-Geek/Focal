@@ -5,6 +5,8 @@ import { ExpensesPage } from "@/pages/ExpensesPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { LandingPage } from "@/pages/LandingPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import { Layout } from "@/components/Layout";
 import { MainLayout } from "@/components/MainLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -22,6 +24,14 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPasswordPage />,
       },
       {
         path: "/verify",

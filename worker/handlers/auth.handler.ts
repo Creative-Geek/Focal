@@ -1,4 +1,5 @@
 import { Context } from 'hono';
+import { z } from 'zod';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
 import { AuthService } from '../services/auth.service';
@@ -295,4 +296,107 @@ export async function resendVerification(c: Context<{ Bindings: Env; Variables: 
     } else {
         return error('Email service not configured', 500);
     }
+}
+
+/**
+ * POST /api/auth/forgot-password
+ * Send password reset email
+ */
+export async function forgotPassword(c: Context<{ Bindings: Env }>) {
+    const env = c.env;
+    const dbService = new DBService(env.DB);
+    const authService = new AuthService(env.JWT_SECRET);
+
+    // Validate request body
+    const validation = await validateRequest(c.req.raw, z.object({
+        email: z.string().email('Invalid email address'),
+    }));
+    if (!validation.success) {
+        return error(validation.error, 400);
+    }
+
+    const { email } = validation.data;
+
+    // Check if user exists
+    const user = await dbService.getUserByEmail(email);
+    if (!user) {
+        // Don't reveal if email exists or not for security
+        return json(
+            success({
+                message: 'If an account with this email exists, a password reset link has been sent.',
+            })
+        );
+    }
+
+    // Generate reset token (1 hour expiry)
+    const resetToken = authService.generateVerificationToken();
+    const resetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    await dbService.setResetToken(user.id, resetToken, resetExpires);
+
+    // Send reset email via Brevo
+    if (env.BREVO_API_KEY) {
+        const brevoService = new BrevoService(env.BREVO_API_KEY);
+        const appUrl = env.APP_URL || 'http://localhost:3000';
+
+        const emailResult = await brevoService.sendPasswordResetEmail(
+            email,
+            user.email.split('@')[0], // Use email username as name
+            resetToken,
+            appUrl
+        );
+
+        if (!emailResult.success) {
+            console.error('[ForgotPassword] Failed to send reset email:', emailResult.error);
+            // Continue with success response even if email fails
+        } else {
+            console.log('[ForgotPassword] Reset email sent:', emailResult.messageId);
+        }
+    } else {
+        console.warn('[ForgotPassword] BREVO_API_KEY not configured - password reset disabled');
+    }
+
+    return json(
+        success({
+            message: 'If an account with this email exists, a password reset link has been sent.',
+        })
+    );
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password with token
+ */
+export async function resetPassword(c: Context<{ Bindings: Env }>) {
+    const env = c.env;
+    const dbService = new DBService(env.DB);
+    const authService = new AuthService(env.JWT_SECRET);
+
+    // Validate request body
+    const validation = await validateRequest(c.req.raw, z.object({
+        token: z.string().min(1, 'Reset token is required'),
+        password: z.string().min(8, 'Password must be at least 8 characters'),
+    }));
+    if (!validation.success) {
+        return error(validation.error, 400);
+    }
+
+    const { token, password } = validation.data;
+
+    // Verify reset token
+    const tokenResult = await dbService.verifyResetToken(token);
+    if (!tokenResult.success) {
+        return error(tokenResult.error || 'Invalid reset token', 400);
+    }
+
+    // Hash new password
+    const passwordHash = await authService.hashPassword(password);
+
+    // Update password and clear reset token
+    await dbService.updatePassword(tokenResult.userId!, passwordHash);
+
+    return json(
+        success(
+            { message: 'Password reset successfully! You can now log in with your new password.' }
+        )
+    );
 }

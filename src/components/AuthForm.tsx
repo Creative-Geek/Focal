@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion, Variants } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,7 +112,17 @@ export function AuthForm({ mode, onSubmit, onModeChange }: AuthFormProps) {
         </motion.div>
 
         <motion.div className="space-y-2" variants={itemVariants}>
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            {mode === "login" && (
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            )}
+          </div>
           <Input
             id="password"
             type="password"
