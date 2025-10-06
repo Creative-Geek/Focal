@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,29 +20,7 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState("");
   const verificationAttempted = useRef(false);
 
-  useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (!token) {
-      setStatus("error");
-      setMessage(
-        "Invalid verification link. Please check your email and try again."
-      );
-      return;
-    }
-
-    // Prevent double verification attempts (React Strict Mode)
-    if (verificationAttempted.current) {
-      return;
-    }
-
-    verificationAttempted.current = true;
-
-    // Verify the token
-    verifyEmail(token);
-  }, [searchParams]);
-
-  const verifyEmail = async (token: string) => {
+  const verifyEmail = useCallback(async (token: string) => {
     try {
       const response = await fetch(`/api/auth/verify/${token}`, {
         method: "GET",
@@ -70,7 +48,29 @@ export default function VerifyEmailPage() {
       );
       console.error("Verification error:", error);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+
+    if (!token) {
+      setStatus("error");
+      setMessage(
+        "Invalid verification link. Please check your email and try again."
+      );
+      return;
+    }
+
+    // Prevent double verification attempts (React Strict Mode)
+    if (verificationAttempted.current) {
+      return;
+    }
+
+    verificationAttempted.current = true;
+
+    // Verify the token
+    verifyEmail(token);
+  }, [searchParams, verifyEmail]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">

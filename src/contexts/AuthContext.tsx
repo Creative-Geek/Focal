@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 interface User {
   id: string;
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Helper to get auth headers
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("auth_token");
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -40,9 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers["Authorization"] = `Bearer ${token}`;
     }
     return headers;
-  };
+  }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/me", {
         headers: getAuthHeaders(),
@@ -68,13 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -100,9 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       return { success: false, error: error.message || "Login failed" };
     }
-  };
+  }, []);
 
-  const signup = async (email: string, password: string) => {
+  const signup = useCallback(async (email: string, password: string) => {
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
@@ -128,9 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       return { success: false, error: error.message || "Signup failed" };
     }
-  };
+  }, []);
 
-  const forgotPassword = async (email: string) => {
+  const forgotPassword = useCallback(async (email: string) => {
     try {
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
@@ -156,9 +156,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: error.message || "Failed to send reset email",
       };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("auth_token");
       setUser(null);
     }
-  };
+  }, [getAuthHeaders]);
 
   return (
     <AuthContext.Provider
@@ -190,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

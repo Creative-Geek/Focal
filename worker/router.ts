@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from './types';
 import { authMiddleware } from './middleware/auth';
+import { rateLimit, byUserId, byEmail } from './middleware/rateLimit';
 import * as authHandler from './handlers/auth.handler';
 import * as expensesHandler from './handlers/expenses.handler';
 import * as apiKeysHandler from './handlers/apiKeys.handler';
@@ -19,8 +20,21 @@ export function createRouter() {
     app.post('/auth/logout', authMiddleware, authHandler.logout);
     app.get('/auth/me', authMiddleware, authHandler.me);
     app.get('/auth/verify/:token', authHandler.verifyEmail);
-    app.post('/auth/resend-verification', authMiddleware, authHandler.resendVerification);
-    app.post('/auth/forgot-password', authHandler.forgotPassword);
+    // Rate limit: 3 requests per 15 minutes
+    const resendVerificationLimiter = rateLimit(
+        'resend-verification',
+        { limit: 3, window: 900 },
+        byUserId
+    );
+    app.post('/auth/resend-verification', resendVerificationLimiter, authMiddleware, authHandler.resendVerification);
+
+    // Rate limit: 3 requests per 15 minutes
+    const forgotPasswordLimiter = rateLimit(
+        'forgot-password',
+        { limit: 3, window: 900 },
+        byEmail
+    );
+    app.post('/auth/forgot-password', forgotPasswordLimiter, authHandler.forgotPassword);
     app.post('/auth/reset-password', authHandler.resetPassword);
 
     // ============ EXPENSE ROUTES (Protected) ============
