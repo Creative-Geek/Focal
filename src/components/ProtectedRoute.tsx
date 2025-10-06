@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function ProtectedRoute() {
   const { user, loading } = useAuth();
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
