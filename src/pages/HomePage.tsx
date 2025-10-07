@@ -78,9 +78,20 @@ function ReviewForm(props: {
 
   useEffect(() => {
     if (originalData && extractedData) {
-      setIsDirty(
-        JSON.stringify(originalData) !== JSON.stringify(extractedData)
-      );
+      // Check if this is new scanned data (has meaningful content)
+      const hasScannedContent =
+        originalData.lineItems.length > 0 &&
+        originalData.lineItems.some((item) => item.description.trim() !== "");
+
+      if (hasScannedContent) {
+        // This is new scanned data, mark as dirty immediately since it represents new information to save
+        setIsDirty(true);
+      } else {
+        // This is manual entry, only mark as dirty if data has actually changed
+        setIsDirty(
+          JSON.stringify(originalData) !== JSON.stringify(extractedData)
+        );
+      }
     } else {
       setIsDirty(false);
     }
