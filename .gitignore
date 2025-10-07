@@ -117,6 +117,7 @@ dev-dist/
 wrangler.toml.bak
 .wrangler
 .dev.vars*
+!.dev.vars.example
 
 # Vite
 .vite/

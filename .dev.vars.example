@@ -1,0 +1,23 @@
+# Example Development Environment Variables
+# Copy this file to `.dev.vars` and fill in your actual values
+
+# REQUIRED: JWT Secret for token signing
+# Generate with: openssl rand -base64 32
+JWT_SECRET="your-jwt-secret-here"
+
+# REQUIRED: Encryption key for storing API keys
+# Generate with: openssl rand -base64 32
+ENCRYPTION_KEY="your-encryption-key-here"
+
+# OPTIONAL: Brevo API key for email verification
+# Get from: https://app.brevo.com/settings/keys/api
+# Comment it out to disable email verification
+BREVO_API_KEY="your-brevo-api-key-here"
+
+# OPTIONAL: Application URL for email verification links
+# Default: http://localhost:3000 (for development)
+# Production: https://your-domain.com
+APP_URL="http://localhost:3000"
+
+# Environment indicator
+NODE_ENV="development"
