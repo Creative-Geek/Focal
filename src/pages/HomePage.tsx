@@ -78,7 +78,9 @@ function ReviewForm(props: {
 
   useEffect(() => {
     if (originalData && extractedData) {
-      setIsDirty(JSON.stringify(originalData) !== JSON.stringify(extractedData));
+      setIsDirty(
+        JSON.stringify(originalData) !== JSON.stringify(extractedData)
+      );
     } else {
       setIsDirty(false);
     }
@@ -149,7 +151,10 @@ function ReviewForm(props: {
           ) : (
             extractedData && (
               <div className="px-3 sm:px-4 overflow-y-auto">
-                <ExpenseForm value={extractedData} onChange={setExtractedData} />
+                <ExpenseForm
+                  value={extractedData}
+                  onChange={setExtractedData}
+                />
               </div>
             )
           )}
@@ -161,7 +166,10 @@ function ReviewForm(props: {
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isProcessing || isSaving || !isDirty}>
+            <Button
+              onClick={handleSave}
+              disabled={isProcessing || isSaving || !isDirty}
+            >
               {isSaving ? (
                 <Loader className="h-4 w-4 animate-spin mr-2" />
               ) : (
@@ -172,7 +180,10 @@ function ReviewForm(props: {
           </Footer>
         </Content>
       </Wrapper>
-      <AlertDialog open={isConfirmationOpen} onOpenChange={setIsConfirmationOpen}>
+      <AlertDialog
+        open={isConfirmationOpen}
+        onOpenChange={setIsConfirmationOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
@@ -353,31 +364,31 @@ export const HomePage: React.FC = () => {
             Instantly capture, analyze, and organize your expenses with a single
             photo. The fastest way to track your spending.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-sm sm:max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
             <Button
               size="lg"
               onClick={() => setIsCameraOpen(true)}
-              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white w-full sm:w-auto"
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
             >
-              <Camera className="mr-3 h-5 w-5" />
+              <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Scan Receipt
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto"
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
             >
-              <Upload className="mr-3 h-5 w-5" />
+              <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Upload Photo
             </Button>
             <Button
               size="lg"
               variant="outline"
               onClick={handleManualEntry}
-              className="w-full sm:w-auto"
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
             >
-              <PenLine className="mr-3 h-5 w-5" />
+              <PenLine className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Manual Entry
             </Button>
             <input

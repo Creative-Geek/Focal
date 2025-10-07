@@ -65,6 +65,7 @@ web_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
 
 # parcel-bundler cache files
 .cache
@@ -106,6 +107,7 @@ build
 target
 dist-ssr
 dist-csr
+dev-dist/
 
 # Miniflare
 .mf/
@@ -113,8 +115,35 @@ dist-csr
 # Wrangler
 .wrangler/
 wrangler.toml.bak
+.wrangler
+.dev.vars*
 
 # Vite
 .vite/
 # Vite PWA
 dist-pwa/
+
+# Lockfiles (let deployment regenerate)
+bun.lock
+bun.lockb
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local
+
+# Project specific
+data/
+.github/*
+docs/IMPLEMENTATION_COMPLETE.md
+docs/TODO.md
+docs/FIXES_APPLIED.md
+docs/PRODUCTION_CHECKLIST.md
+prompts/usage.md
