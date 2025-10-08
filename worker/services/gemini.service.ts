@@ -10,6 +10,9 @@ export class GeminiService {
     async processReceipt(apiKey: string, base64Image: string, modelName: string): Promise<any> {
         const genAI = new GoogleGenerativeAI(apiKey);
 
+        // Get current date in YYYY-MM-DD format for the prompt
+        const currentDate = new Date().toISOString().split('T')[0];
+
         const model = genAI.getGenerativeModel({
             model: modelName,
             generationConfig: {
@@ -78,7 +81,7 @@ export class GeminiService {
 
 Important:
 - Extract the raw numeric total value without any currency symbols
-- If date is unclear, use today's date
+- If date is unclear or not visible, use ${currentDate} (today's date: ${currentDate})
 - If lineItems are not visible or unclear, return an empty array
 - All fields are required and must match the schema`;
 

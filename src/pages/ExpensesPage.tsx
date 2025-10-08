@@ -259,9 +259,10 @@ export const ExpensesPage: React.FC = () => {
     .slice()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((exp) => ({
-      name: new Date(exp.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
+      name: new Date(exp.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       }),
       total: exp.total,
     }));
@@ -580,7 +581,11 @@ export const ExpensesPage: React.FC = () => {
                           </button>
                         </TableCell>
                         <TableCell>
-                          {new Date(expense.date).toLocaleDateString()}
+                          {new Date(expense.date).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </TableCell>
                         <TableCell className="font-medium">
                           {expense.merchant}
@@ -739,7 +744,11 @@ export const ExpensesPage: React.FC = () => {
                         {expense.merchant}
                       </CardTitle>
                       <p className="text-xs sm:text-sm text-muted-foreground">
-                        {new Date(expense.date).toLocaleDateString()}
+                        {new Date(expense.date).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
