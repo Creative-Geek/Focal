@@ -107,7 +107,7 @@ export function LandingPage() {
       icon: <Scan className="h-6 w-6" />,
       title: "AI Receipt Scanning",
       description:
-        "Instantly digitize receipts with advanced AI technology. Automatic data extraction and categorization.",
+        "Instantly digitize receipts with Gemini AI (Pro, Flash, or Flash Lite). Automatic data extraction and smart categorization.",
       delay: 0.1,
     },
     {
@@ -119,16 +119,16 @@ export function LandingPage() {
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "Bank-Level Security",
+      title: "End-to-End Security",
       description:
-        "Your financial data is protected with 256-bit encryption and multi-factor authentication.",
+        "JWT-based authentication with bcrypt password hashing and AES-256-GCM API key encryption.",
       delay: 0.3,
     },
     {
       icon: <Smartphone className="h-6 w-6" />,
-      title: "Progressive Web App",
+      title: "Edge-First PWA",
       description:
-        "Install on any device. Works offline with seamless sync across all your devices.",
+        "Deployed on Cloudflare's global network. Install on any device and works offline with seamless sync.",
       delay: 0.4,
     },
     {
@@ -301,7 +301,7 @@ export function LandingPage() {
                   style={{ animation: "fadeInUp 0.6s ease-out" }}
                 >
                   <Sparkles className="mr-1 h-3 w-3" />
-                  AI-Powered Finance Tracking
+                  Privacy-Focused PWA with Gemini AI
                 </Badge>
 
                 <h1
@@ -310,7 +310,7 @@ export function LandingPage() {
                 >
                   Master Your Finances with{" "}
                   <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                    Focal Finance
+                    Focal
                   </span>
                 </h1>
 
@@ -318,9 +318,9 @@ export function LandingPage() {
                   className="mb-10 text-lg text-muted-foreground md:text-xl"
                   style={{ animation: "fadeInUp 0.6s ease-out 0.2s both" }}
                 >
-                  Open-source expense tracker that uses AI to scan receipts,
-                  categorize spending, and provide actionable insights. Take
-                  control of your financial future today.
+                  Modern, privacy-focused expense tracking PWA with AI-powered
+                  receipt scanning using Gemini AI. Secure, works offline, and
+                  deployed on Cloudflare's global network.
                 </p>
 
                 <div
@@ -462,25 +462,25 @@ export function LandingPage() {
           <div>
             <Badge className="mb-4 border-primary/20 bg-primary/10 text-primary">
               <Lock className="mr-1 h-3 w-3" />
-              Enterprise Security
+              Privacy & Security
             </Badge>
             <h2 className="mb-6 text-4xl font-bold text-foreground md:text-5xl">
-              Your Data is Safe & Secure
+              Your Privacy is Protected
             </h2>
             <p className="mb-8 text-lg text-muted-foreground">
-              We take security seriously. Your financial data is protected with
-              industry-leading encryption and security measures trusted by
-              financial institutions worldwide.
+              Modern, privacy-focused design with JWT authentication, bcrypt
+              password hashing, and AES-256-GCM encryption. Your financial data
+              stays secure and private.
             </p>
 
             <div className="space-y-4">
               {[
-                "End-to-end 256-bit encryption",
-                "Multi-factor authentication",
-                "Regular security audits",
-                "GDPR & SOC 2 compliant",
-                "Secure cloud backup",
-                "Zero-knowledge architecture",
+                "AES-256-GCM API key encryption",
+                "JWT authentication with bcrypt hashing",
+                "SQL injection protection",
+                "Input validation with Zod",
+                "CORS configuration",
+                "Privacy-focused design",
               ].map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
@@ -542,8 +542,9 @@ export function LandingPage() {
               Ready to Take Control of Your Finances?
             </h2>
             <p className="mb-10 text-lg text-muted-foreground">
-              Join thousands of users who are already managing their money
-              smarter with Focal Finance. Free and open-source forever.
+              Join users worldwide who trust Focal for secure, private expense
+              tracking with AI-powered receipt scanning. Free, open-source, and
+              works offline.
             </p>
 
             <div className="mb-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -595,12 +596,12 @@ export function LandingPage() {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex items-center gap-2">
               <img src="/focal-icon.svg" alt="Focal" className="h-10 w-10" />
-              <span className="text-xl font-bold text-foreground">
-                Focal Finance
-              </span>
+              <span className="text-xl font-bold text-foreground">Focal</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 Focal Finance. All rights reserved.
+              © 2025 Focal. All rights reserved.
+              <br />
+              <span className="mt-2 block">Built with ❤️ by Creative Geek</span>
             </p>
           </div>
         </div>
