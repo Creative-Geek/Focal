@@ -124,8 +124,13 @@ export const ExpensesPage: React.FC = () => {
     return String(now.getMonth() + 1).padStart(2, "0");
   };
 
+  // Get current year for default filter
+  const getCurrentYear = () => {
+    return String(new Date().getFullYear());
+  };
+
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
-  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>(getCurrentYear());
   const availableYears = useMemo(() => {
     const yearsSet = new Set<number>();
     expenses.forEach((exp) => yearsSet.add(new Date(exp.date).getFullYear()));
