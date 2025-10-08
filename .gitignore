@@ -149,3 +149,5 @@ docs/FIXES_APPLIED.md
 docs/PRODUCTION_CHECKLIST.md
 prompts/usage.md
 email-preview.html
+nul
+pnpm-workspace.yaml

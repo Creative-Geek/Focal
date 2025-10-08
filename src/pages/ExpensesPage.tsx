@@ -118,7 +118,13 @@ export const ExpensesPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  // Get current month in MM format for default filter
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return String(now.getMonth() + 1).padStart(2, "0");
+  };
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonth());
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const availableYears = useMemo(() => {
     const yearsSet = new Set<number>();
