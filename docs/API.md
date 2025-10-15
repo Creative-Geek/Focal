@@ -9,57 +9,49 @@ Complete API reference for Focal's backend endpoints.
 
 ## Authentication
 
-All endpoints except `/auth/register` and `/auth/login` require authentication via JWT token.
+All endpoints except `/auth/register`, `/auth/login`, `/auth/verify-email`, and `/auth/forgot-password` require authentication via a JWT token sent in an `HttpOnly` cookie. The `/auth/reset-password` endpoint uses a temporary token from the password reset email.
 
-Include the token in the Authorization header:
-
-```
-Authorization: Bearer <your-jwt-token>
-```
+The API enforces rate limiting on certain endpoints to prevent abuse.
 
 ## Database Schema
 
-### Users Table
+### `users`
 
-```sql
-CREATE TABLE users (
-  id TEXT PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,  -- bcrypt hashed
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+| Column        | Type        | Description                 |
+| :------------ | :---------- | :-------------------------- |
+| `id`          | `TEXT`      | Primary Key, UUID           |
+| `email`       | `TEXT`      | Unique, Not Null            |
+| `password`    | `TEXT`      | Not Null, bcrypt hashed     |
+| `is_verified` | `INTEGER`   | Boolean, `0` or `1`         |
+| `created_at`  | `TIMESTAMP` | Default `CURRENT_TIMESTAMP` |
 
-### Expenses Table
+### `expenses`
 
-```sql
-CREATE TABLE expenses (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  amount REAL NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  quantity REAL DEFAULT 1,
-  category TEXT,
-  description TEXT,
-  date TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-```
+| Column        | Type        | Description                 |
+| :------------ | :---------- | :-------------------------- |
+| `id`          | `TEXT`      | Primary Key, UUID           |
+| `user_id`     | `TEXT`      | Foreign Key to `users.id`   |
+| `amount`      | `REAL`      | Not Null                    |
+| `currency`    | `TEXT`      | Default `'USD'`             |
+| `quantity`    | `REAL`      | Default `1`                 |
+| `category`    | `TEXT`      |                             |
+| `description` | `TEXT`      |                             |
+| `date`        | `TEXT`      | Not Null, `YYYY-MM-DD`      |
+| `created_at`  | `TIMESTAMP` | Default `CURRENT_TIMESTAMP` |
 
-### API Keys Table
+### `api_keys`
 
-```sql
-CREATE TABLE api_keys (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  service TEXT NOT NULL,  -- e.g., 'gemini'
-  encrypted_key TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id),
-  UNIQUE(user_id, service)
-);
-```
+This table stores user-specific settings, including their preferred AI provider and default currency.
+
+| Column             | Type        | Description                                               |
+| :----------------- | :---------- | :-------------------------------------------------------- |
+| `id`               | `TEXT`      | Primary Key, UUID                                         |
+| `user_id`          | `TEXT`      | Foreign Key to `users.id`, Unique                         |
+| `default_currency` | `TEXT`      | 3-letter ISO code, Default `'USD'`                        |
+| `ai_provider`      | `TEXT`      | `'gemini'`, `'openai'`, or `'nvidia'`, Default `'gemini'` |
+| `created_at`       | `TIMESTAMP` | Default `CURRENT_TIMESTAMP`                               |
+
+---
 
 ## Endpoints
 
@@ -67,11 +59,9 @@ CREATE TABLE api_keys (
 
 #### Register
 
-Create a new user account.
+`POST /api/auth/register`
 
-```http
-POST /api/auth/register
-```
+Create a new user account. If email verification is enabled, an email will be sent.
 
 **Request Body:**
 
@@ -86,21 +76,19 @@ POST /api/auth/register
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "user-uuid",
-    "email": "user@example.com"
+  "success": true,
+  "data": {
+    "user": { "id": "user-uuid", "email": "user@example.com" },
+    "message": "Registration successful. Please check your email to verify your account."
   }
 }
 ```
 
 #### Login
 
-Authenticate and receive a JWT token.
+`POST /api/auth/login`
 
-```http
-POST /api/auth/login
-```
+Authenticate a user and receive a JWT token in an `HttpOnly` cookie.
 
 **Request Body:**
 
@@ -115,265 +103,136 @@ POST /api/auth/login
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "user-uuid",
-    "email": "user@example.com"
+  "success": true,
+  "data": {
+    "user": { "id": "user-uuid", "email": "user@example.com" }
   }
 }
 ```
+
+#### Verify Email
+
+`GET /api/auth/verify-email?token=<verification-token>`
+
+Verify a user's email address using the token sent to them.
+
+**Response:** `200 OK` with a success message or `400 Bad Request` if the token is invalid/expired.
+
+#### Forgot Password
+
+`POST /api/auth/forgot-password`
+
+Initiate the password reset process. An email with a reset link will be sent.
+
+**Request Body:**
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:** `200 OK`
+
+#### Reset Password
+
+`POST /api/auth/reset-password`
+
+Reset a user's password using a token from the reset email.
+
+**Request Body:**
+
+```json
+{
+  "token": "reset-token-from-email",
+  "password": "new-secure-password"
+}
+```
+
+**Response:** `200 OK`
 
 ### Expenses
 
 #### List Expenses
 
+`GET /api/expenses`
+
 Get all expenses for the authenticated user.
-
-```http
-GET /api/expenses
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
 
 **Response:** `200 OK`
 
 ```json
-[
-  {
-    "id": "expense-uuid",
-    "user_id": "user-uuid",
-    "amount": 42.5,
-    "currency": "USD",
-    "quantity": 2,
-    "category": "Food",
-    "description": "Lunch at restaurant",
-    "date": "2025-01-04",
-    "created_at": "2025-01-04T20:30:00.000Z"
-  }
-]
+{
+  "success": true,
+  "data": [
+    {
+      "id": "expense-uuid",
+      "amount": 42.5,
+      "currency": "USD"
+      /* ... other fields */
+    }
+  ]
+}
 ```
 
 #### Create Expense
 
+`POST /api/expenses`
+
 Add a new expense.
-
-```http
-POST /api/expenses
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
 
 **Request Body:**
 
 ```json
 {
   "amount": 42.5,
-  "currency": "USD",
-  "quantity": 2,
+  "date": "2025-01-04",
+  "description": "Lunch",
   "category": "Food",
-  "description": "Lunch at restaurant",
-  "date": "2025-01-04"
+  "currency": "USD"
 }
 ```
 
 **Response:** `201 Created`
 
-```json
-{
-  "id": "expense-uuid",
-  "user_id": "user-uuid",
-  "amount": 42.5,
-  "currency": "USD",
-  "quantity": 2,
-  "category": "Food",
-  "description": "Lunch at restaurant",
-  "date": "2025-01-04",
-  "created_at": "2025-01-04T20:30:00.000Z"
-}
-```
-
 #### Update Expense
+
+`PUT /api/expenses/:id`
 
 Modify an existing expense.
 
-```http
-PUT /api/expenses/:id
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
-
-**Request Body:**
+**Request Body:** (partial or full update)
 
 ```json
 {
   "amount": 45.0,
-  "category": "Dining",
   "description": "Updated description"
 }
 ```
 
 **Response:** `200 OK`
 
-```json
-{
-  "id": "expense-uuid",
-  "user_id": "user-uuid",
-  "amount": 45.0,
-  "currency": "USD",
-  "quantity": 2,
-  "category": "Dining",
-  "description": "Updated description",
-  "date": "2025-01-04",
-  "created_at": "2025-01-04T20:30:00.000Z"
-}
-```
-
 #### Delete Expense
+
+`DELETE /api/expenses/:id`
 
 Remove an expense.
 
-```http
-DELETE /api/expenses/:id
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
-
 **Response:** `204 No Content`
 
-### Receipt Scanning
+### Receipt Processing
 
-#### Scan Receipt
+#### Process Receipt
 
-Extract expense data from a receipt image using AI.
+`POST /api/receipts/process`
 
-```http
-POST /api/receipts/scan
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-Content-Type: multipart/form-data
-```
-
-**Request Body:**
-
-```
-image: <file> (JPEG, PNG, WebP)
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "amount": 42.5,
-  "currency": "USD",
-  "category": "Food",
-  "description": "Lunch at restaurant",
-  "date": "2025-01-04",
-  "quantity": 2
-}
-```
-
-### API Keys
-
-#### Check if API Key Exists
-
-Check if a user has an API key for a specific service.
-
-```http
-GET /api/api-keys/:service
-```
-
-**Parameters:**
-
-- `service`: Service name (e.g., "gemini")
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "exists": true
-}
-```
-
-#### Store API Key
-
-Save an encrypted API key for a service.
-
-```http
-POST /api/api-keys
-```
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
+Extract expense data from a receipt image using the user's selected AI provider. This endpoint is rate-limited.
 
 **Request Body:**
 
 ```json
 {
-  "service": "gemini",
-  "apiKey": "your-gemini-api-key"
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "message": "API key saved successfully"
-}
-```
-
-#### Update API Key
-
-Update an existing API key.
-
-```http
-PUT /api/api-keys/:service
-```
-
-**Parameters:**
-
-- `service`: Service name (e.g., "gemini")
-
-**Headers:**
-
-```
-Authorization: Bearer <token>
-```
-
-**Request Body:**
-
-```json
-{
-  "apiKey": "new-gemini-api-key"
+  "image": "data:image/jpeg;base64,..."
 }
 ```
 
@@ -381,38 +240,86 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "message": "API key updated successfully"
+  "success": true,
+  "data": {
+    "merchant": "The Coffee Shop",
+    "date": "2025-01-04",
+    "total": 12.5,
+    "category": "Food & Drink",
+    "currency": "USD",
+    "lineItems": [{ "description": "Latte", "quantity": 1, "price": 5.0 }]
+  }
 }
 ```
 
-#### Delete API Key
+#### Get AI Usage Quota
 
-Remove an API key.
+`GET /api/receipts/quota`
 
-```http
-DELETE /api/api-keys/:service
+Check the user's current AI scan usage and limit for the rolling 24-hour window.
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "limit": 10,
+    "used": 3,
+    "remaining": 7,
+    "resetAt": 1697443200000
+  }
+}
 ```
 
-**Parameters:**
+### User Settings
 
-- `service`: Service name (e.g., "gemini")
+#### Get User Settings
 
-**Headers:**
+`GET /api/settings`
 
+Get the current user's settings (currency and AI provider).
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "defaultCurrency": "USD",
+    "aiProvider": "gemini"
+  }
+}
 ```
-Authorization: Bearer <token>
+
+#### Update User Settings
+
+`PUT /api/settings`
+
+Update the user's settings.
+
+**Request Body:**
+
+```json
+{
+  "defaultCurrency": "EUR",
+  "aiProvider": "openai"
+}
 ```
 
-**Response:** `204 No Content`
+**Response:** `200 OK`
 
 ## Error Responses
+
+The API returns standardized error responses.
 
 ### 400 Bad Request
 
 ```json
 {
-  "error": "Invalid request data",
-  "details": "Email is required"
+  "success": false,
+  "error": "Invalid request",
+  "details": "Field 'email' is required."
 }
 ```
 
@@ -420,8 +327,8 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "error": "Unauthorized",
-  "details": "Invalid or missing token"
+  "success": false,
+  "error": "Unauthorized"
 }
 ```
 
@@ -429,8 +336,19 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "error": "Not found",
-  "details": "Expense not found"
+  "success": false,
+  "error": "Not found"
+}
+```
+
+### 429 Too Many Requests
+
+Returned by rate-limited endpoints.
+
+```json
+{
+  "success": false,
+  "error": "Daily AI scan limit reached (10/10 used). Your quota will reset in approximately 23 hours."
 }
 ```
 
@@ -438,37 +356,21 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "error": "Internal server error",
-  "details": "Database connection failed"
+  "success": false,
+  "error": "Internal Server Error"
 }
 ```
 
 ## Security
 
-- All passwords are hashed with bcrypt (10 salt rounds)
-- JWT tokens expire after 7 days
-- API keys are encrypted with AES-256-GCM before storage
-- SQL injection protection via prepared statements
-- CORS configured for trusted domains only
-- Input validation with Zod schemas
+- **Authentication**: JWTs are handled via secure, `HttpOnly` cookies.
+- **Password Hashing**: Passwords are hashed using `bcrypt`.
+- **CORS**: Configured to only allow requests from the frontend origin.
+- **Input Validation**: All incoming request bodies are validated using Zod schemas.
+- **SQL Injection**: Protected against by using D1's prepared statements.
 
 ## Rate Limiting
 
-Currently no rate limiting implemented. Consider implementing for production use.
-
-## Testing
-
-Use tools like:
-
-- **curl**: Command-line HTTP client
-- **Postman**: API testing platform
-- **Thunder Client**: VS Code extension
-- **Insomnia**: API development platform
-
-Example curl request:
-
-```bash
-curl -X POST http://localhost:8787/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password"}'
-```
+- The `/api/receipts/process` endpoint is rate-limited to **10 requests per user per 24 hours**.
+- The limit is enforced based on the user's ID.
+- The rate-limiting state is stored in the D1 database.
