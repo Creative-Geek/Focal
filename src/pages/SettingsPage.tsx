@@ -14,9 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
 const AI_PROVIDERS = [
-  { value: "gemini", label: "Google Gemini", description: "Accurate" },
-  { value: "openai", label: "OpenAI GPT-4o", description: "Fast" },
-  { value: "nvidia", label: "Nvidia NIM", description: "Very Fast" },
+  { value: "gemini", label: "Google Gemini - Accurate" },
+  { value: "openai", label: "OpenAI GPT-4o - Fast" },
+  { value: "nvidia", label: "Nvidia NIM - Very Fast" },
 ];
 const API_BASE_URL = "/api";
 
@@ -145,9 +145,6 @@ export const SettingsPage: React.FC = () => {
                       <SelectItem key={provider.value} value={provider.value}>
                         <div className="flex flex-col">
                           <span>{provider.label}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {provider.description}
-                          </span>
                         </div>
                       </SelectItem>
                     ))}
