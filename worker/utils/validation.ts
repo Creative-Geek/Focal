@@ -14,11 +14,6 @@ export const loginSchema = z.object({
     password: z.string().min(1, 'Password is required'),
 });
 
-export const apiKeySchema = z.object({
-    apiKey: z.string().min(1, 'API key is required'),
-    defaultCurrency: z.string().optional(),
-});
-
 export const expenseSchema = z.object({
     merchant: z.string().min(1, 'Merchant is required'),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
@@ -36,7 +31,6 @@ export const expenseSchema = z.object({
 
 export const processReceiptSchema = z.object({
     image: z.string().min(1, 'Image data is required'),
-    model: z.enum(['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']).optional(),
 });
 
 /**

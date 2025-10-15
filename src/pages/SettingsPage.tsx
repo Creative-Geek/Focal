@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Save, Loader } from "lucide-react";
+import { Save, Loader, Info } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,10 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useModel } from "@/hooks/use-model";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
-const MODELS = ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const AI_PROVIDERS = [
+  { value: "gemini", label: "Google Gemini", description: "Accurate" },
+  { value: "openai", label: "OpenAI GPT-4o", description: "Fast" },
+  { value: "nvidia", label: "Nvidia NIM", description: "Very Fast" },
+];
 const API_BASE_URL = "/api";
 
 // Helper to get auth headers
@@ -30,12 +33,10 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 export const SettingsPage: React.FC = () => {
-  const [apiKey, setApiKey] = useState("");
   const [currency, setCurrency] = useState("USD");
-  const { model, setModel } = useModel();
+  const [aiProvider, setAiProvider] = useState("gemini");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasExistingKey, setHasExistingKey] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -44,28 +45,25 @@ export const SettingsPage: React.FC = () => {
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      // Fetch API key status and currency
-      const [keyResponse, currencyResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/settings/api-key`, {
+      const [currencyResponse, providerResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/settings/currency`, {
           headers: getAuthHeaders(),
           credentials: "include",
         }),
-        fetch(`${API_BASE_URL}/settings/currency`, {
+        fetch(`${API_BASE_URL}/settings/ai-provider`, {
           headers: getAuthHeaders(),
           credentials: "include",
         }),
       ]);
 
-      if (keyResponse.ok) {
-        const keyData = await keyResponse.json();
-        setHasExistingKey(keyData.data?.hasApiKey || false);
-        // Don't set the actual key value for security
-        setApiKey("");
-      }
-
       if (currencyResponse.ok) {
         const currencyData = await currencyResponse.json();
         setCurrency(currencyData.data?.defaultCurrency || "USD");
+      }
+
+      if (providerResponse.ok) {
+        const providerData = await providerResponse.json();
+        setAiProvider(providerData.data?.aiProvider || "gemini");
       }
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -78,48 +76,27 @@ export const SettingsPage: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const requests: Promise<Response>[] = [];
+      const [currencyResponse, providerResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/settings/currency`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          credentials: "include",
+          body: JSON.stringify({ defaultCurrency: currency }),
+        }),
+        fetch(`${API_BASE_URL}/settings/ai-provider`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          credentials: "include",
+          body: JSON.stringify({ aiProvider }),
+        }),
+      ]);
 
-      // Save API key if provided
-      if (apiKey.trim()) {
-        requests.push(
-          fetch(`${API_BASE_URL}/settings/api-key`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            credentials: "include",
-            body: JSON.stringify({
-              apiKey: apiKey.trim(),
-              defaultCurrency: currency,
-            }),
-          })
-        );
-      } else if (hasExistingKey) {
-        // Update currency only if key exists and no new key provided
-        requests.push(
-          fetch(`${API_BASE_URL}/settings/currency`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            credentials: "include",
-            body: JSON.stringify({ defaultCurrency: currency }),
-          })
-        );
-      }
-
-      if (requests.length > 0) {
-        const responses = await Promise.all(requests);
-        const allSuccess = responses.every((r) => r.ok);
-
-        if (allSuccess) {
-          toast.success("Settings Saved", {
-            description: "Your settings have been updated successfully.",
-          });
-          setApiKey(""); // Clear the input
-          setHasExistingKey(true);
-        } else {
-          throw new Error("Failed to save settings");
-        }
+      if (currencyResponse.ok && providerResponse.ok) {
+        toast.success("Settings Saved", {
+          description: "Your preferences have been updated successfully.",
+        });
       } else {
-        toast.error("Please enter an API key");
+        throw new Error("Failed to save settings");
       }
     } catch (error) {
       console.error("Failed to save settings:", error);
@@ -132,10 +109,11 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+          Settings
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Manage your application settings. Your API key is encrypted and
-          stored securely on the server.
+          Manage your application preferences.
         </p>
       </header>
       {isLoading ? (
@@ -144,37 +122,47 @@ export const SettingsPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Choose your preferred AI provider for receipt scanning. You have
+              10 free scans per day.
+            </AlertDescription>
+          </Alert>
+
           <div className="grid gap-6">
             <div className="grid md:grid-cols-3 items-start gap-4">
-              <Label htmlFor="api-key" className="md:text-right md:mt-2">
-                API Key
+              <Label htmlFor="ai-provider" className="md:text-right md:mt-2">
+                AI Provider
               </Label>
               <div className="md:col-span-2 space-y-2">
-                <Input
-                  id="api-key"
-                  type="text"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  autoCapitalize="none"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    hasExistingKey
-                      ? "••••••••••••••••"
-                      : "Enter your Gemini API key"
-                  }
-                />
-                {hasExistingKey && (
-                  <p className="text-xs text-muted-foreground">
-                    API key is configured. Enter a new key to update.
-                  </p>
-                )}
+                <Select value={aiProvider} onValueChange={setAiProvider}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select AI provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AI_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.value} value={provider.value}>
+                        <div className="flex flex-col">
+                          <span>{provider.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {provider.description}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Switch providers if one isn't working or to try different
+                  accuracy levels.
+                </p>
               </div>
             </div>
+
             <div className="grid md:grid-cols-3 items-center gap-4">
               <Label htmlFor="currency" className="md:text-right">
-                Currency
+                Default Currency
               </Label>
               <div className="md:col-span-2">
                 <Select value={currency} onValueChange={setCurrency}>
@@ -189,25 +177,9 @@ export const SettingsPage: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-3 items-center gap-4">
-              <Label htmlFor="model" className="md:text-right">
-                Model
-              </Label>
-              <div className="md:col-span-2">
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODELS.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This currency will be automatically assigned to new expenses.
+                </p>
               </div>
             </div>
           </div>

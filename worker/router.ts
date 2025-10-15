@@ -46,13 +46,13 @@ export function createRouter() {
 
     // ============ RECEIPT PROCESSING ROUTES (Protected) ============
     app.post('/receipts/process', authMiddleware, receiptsHandler.processReceipt);
+    app.get('/receipts/quota', authMiddleware, receiptsHandler.getAIQuota);
 
     // ============ SETTINGS ROUTES (Protected) ============
-    app.get('/settings/api-key', authMiddleware, apiKeysHandler.getApiKeyStatus);
-    app.put('/settings/api-key', authMiddleware, apiKeysHandler.saveApiKey);
-    app.delete('/settings/api-key', authMiddleware, apiKeysHandler.deleteApiKey);
     app.get('/settings/currency', authMiddleware, apiKeysHandler.getCurrency);
     app.put('/settings/currency', authMiddleware, apiKeysHandler.updateCurrency);
+    app.get('/settings/ai-provider', authMiddleware, apiKeysHandler.getAIProvider);
+    app.put('/settings/ai-provider', authMiddleware, apiKeysHandler.updateAIProvider);
 
     // ============ ERROR LOGGING ROUTES ============
     app.post('/client-errors', errorsHandler.logClientError);

@@ -8,6 +8,15 @@ export interface Env {
     NODE_ENV: string;
     BREVO_API_KEY?: string; // Optional: Brevo API key for sending transactional emails
     APP_URL?: string; // Optional: Application URL for email links (defaults to localhost in dev)
+
+    // AI Provider Configuration
+    AI_PROVIDER?: string; // AI provider to use: 'gemini' | 'openai' | 'nvidia' (defaults to 'gemini')
+    AI_MODEL?: string; // Optional: Override default model for the provider
+
+    // AI Provider API Keys (configure the one matching your AI_PROVIDER)
+    GEMINI_API_KEY?: string; // For Google Gemini (gemini-2.5-flash, gemini-2.5-pro, etc.)
+    GITHUB_TOKEN?: string; // For GitHub Models (OpenAI GPT-4o)
+    NVIDIA_API_KEY?: string; // For Nvidia NIM (llama-3.2-90b-vision-instruct)
 }
 
 export interface User {
@@ -26,6 +35,7 @@ export interface ApiKey {
     user_id: string;
     encrypted_key: string;
     default_currency: string;
+    ai_provider?: string; // User's preferred AI provider: 'gemini' | 'openai' | 'nvidia'
     created_at: number;
 }
 

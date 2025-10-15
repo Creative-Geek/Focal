@@ -44,7 +44,7 @@ export class DBService {
 
     // ============ API KEY OPERATIONS ============
 
-    async saveApiKey(id: string, userId: string, encryptedKey: string, defaultCurrency: string = 'USD'): Promise<void> {
+    async saveApiKey(id: string, userId: string, encryptedKey: string, defaultCurrency: string = 'USD', aiProvider: string = 'gemini'): Promise<void> {
         const now = Date.now();
 
         // Check if user already has an API key
@@ -56,15 +56,32 @@ export class DBService {
         if (existing) {
             // Update existing
             await this.db
-                .prepare('UPDATE api_keys SET encrypted_key = ?, default_currency = ? WHERE user_id = ?')
-                .bind(encryptedKey, defaultCurrency, userId)
+                .prepare('UPDATE api_keys SET encrypted_key = ?, default_currency = ?, ai_provider = ? WHERE user_id = ?')
+                .bind(encryptedKey, defaultCurrency, aiProvider, userId)
                 .run();
         } else {
             // Insert new
             await this.db
-                .prepare('INSERT INTO api_keys (id, user_id, encrypted_key, default_currency, created_at) VALUES (?, ?, ?, ?, ?)')
-                .bind(id, userId, encryptedKey, defaultCurrency, now)
+                .prepare('INSERT INTO api_keys (id, user_id, encrypted_key, default_currency, ai_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+                .bind(id, userId, encryptedKey, defaultCurrency, aiProvider, now)
                 .run();
+        }
+    }
+
+    async updateAIProvider(userId: string, aiProvider: string): Promise<void> {
+        // Check if record exists
+        const existing = await this.getApiKey(userId);
+
+        if (existing) {
+            // Update existing record
+            await this.db
+                .prepare('UPDATE api_keys SET ai_provider = ? WHERE user_id = ?')
+                .bind(aiProvider, userId)
+                .run();
+        } else {
+            // Create new record
+            const id = crypto.randomUUID();
+            await this.saveApiKey(id, userId, '', 'USD', aiProvider);
         }
     }
 

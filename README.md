@@ -14,12 +14,13 @@ A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-pow
 
 ## ✨ Features
 
-- 📸 **AI Receipt Scanning** - Extract expense details from photos using Gemini 2.5 (Pro, Flash, or Flash Lite)
+- 📸 **AI Receipt Scanning** - Extract expense details from photos using multiple AI providers (Gemini, OpenAI GPT-4o, Nvidia NIM)
+- 🔄 **Multi-Provider Support** - Easily switch between AI providers with a single config change
 - 💰 **Expense Tracking** - Manage expenses with categories, amounts, and notes
 - 🔐 **Secure Auth** - JWT-based authentication with bcrypt password hashing
 - 🌓 **Dark/Light Theme** - Beautiful UI with theme persistence
 - 📱 **Progressive Web App** - Install on any device, works offline
-- 🔒 **End-to-End Security** - Encrypted API keys and secure token storage
+- 🔒 **Production-Ready** - Server-side API keys, no user setup required
 - ⚡ **Edge-First** - Deployed on Cloudflare's global network
 
 <figure>
@@ -58,12 +59,15 @@ Visit http://localhost:3000 to get started!
 
 **Frontend:** React 18 • TypeScript • Vite • TailwindCSS • shadcn/ui
 
-**Backend:** Cloudflare Workers • Hono.js • D1 (SQLite) • Google Gemini AI
+**Backend:** Cloudflare Workers • Hono.js • D1 (SQLite)
+
+**AI Providers:** Google Gemini • OpenAI (GitHub Models) • Nvidia NIM
 
 **Tools:** ESLint • Wrangler • pnpm
 
 ## 📚 Documentation
 
+- **[AI Providers Guide](docs/AI_PROVIDERS.md)** - Configure and switch between AI providers
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup, configuration, and local development
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment to Cloudflare
 - **[API Reference](docs/API.md)** - Complete API documentation

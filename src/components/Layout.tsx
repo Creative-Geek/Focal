@@ -81,20 +81,16 @@ const Footer: React.FC = () => {
     <footer className="bg-background border-t hidden sm:block">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500 dark:text-gray-400">
         <div className="flex justify-center items-center gap-4">
-          <p>
-            Built with ❤️ at Cloudflare. All expenses are stored locally in your
-            browser.
-          </p>
+          <p>Built with ❤️ by The Creative Geek.</p>
           <Button variant="ghost" size="sm" asChild>
             <NavLink to="/settings">
               <Settings className="h-4 w-4 mr-2" />
-              API Key Settings
+              Settings
             </NavLink>
           </Button>
         </div>
         <p className="mt-2 text-xs text-gray-400">
-          AI features require a Google AI API key. Configure your key in
-          settings to enable receipt scanning.
+          Configure your preferences and default currency in settings.
         </p>
       </div>
     </footer>

@@ -107,7 +107,7 @@ export function LandingPage() {
       icon: <Scan className="h-6 w-6" />,
       title: "AI Receipt Scanning",
       description:
-        "Instantly digitize receipts with Gemini AI (Pro, Flash, or Flash Lite). Automatic data extraction and smart categorization.",
+        "Instantly digitize receipts with advanced AI vision models. Automatic data extraction and smart categorization with multi-provider support.",
       delay: 0.1,
     },
     {
@@ -119,9 +119,9 @@ export function LandingPage() {
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "End-to-End Security",
+      title: "Enterprise Security",
       description:
-        "JWT-based authentication with bcrypt password hashing and AES-256-GCM API key encryption.",
+        "JWT-based authentication with bcrypt password hashing, server-side AI processing, and rate limiting.",
       delay: 0.3,
     },
     {
@@ -301,7 +301,7 @@ export function LandingPage() {
                   style={{ animation: "fadeInUp 0.6s ease-out" }}
                 >
                   <Sparkles className="mr-1 h-3 w-3" />
-                  Privacy-Focused PWA with Gemini AI
+                  Privacy-Focused PWA with AI Vision
                 </Badge>
 
                 <h1
@@ -319,8 +319,8 @@ export function LandingPage() {
                   style={{ animation: "fadeInUp 0.6s ease-out 0.2s both" }}
                 >
                   Modern, privacy-focused expense tracking PWA with AI-powered
-                  receipt scanning using Gemini AI. Secure, works offline, and
-                  deployed on Cloudflare's global network.
+                  receipt scanning. Secure, works offline, and deployed on
+                  Cloudflare's global network.
                 </p>
 
                 <div
@@ -475,7 +475,7 @@ export function LandingPage() {
 
             <div className="space-y-4">
               {[
-                "AES-256-GCM API key encryption",
+                "Server-side AI processing with rate limiting",
                 "JWT authentication with bcrypt hashing",
                 "SQL injection protection",
                 "Input validation with Zod",

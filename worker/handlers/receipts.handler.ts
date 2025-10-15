@@ -1,8 +1,8 @@
 import { Context } from 'hono';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
-import { EncryptionService } from '../services/encryption.service';
-import { GeminiService } from '../services/gemini.service';
+import { RateLimitService } from '../services/rateLimit.service';
+import { AIProviderFactory, AIProviderType } from '../services/ai/factory';
 import { validateRequest, processReceiptSchema } from '../utils/validation';
 import { success, error, json } from '../utils/response';
 
@@ -12,16 +12,20 @@ type Variables = {
     token: string;
 };
 
+// AI usage rate limit: 10 requests per day per user
+const AI_RATE_LIMIT = {
+    limit: 10,
+    window: 24 * 60 * 60, // 24 hours in seconds
+};
+
 /**
  * POST /api/receipts/process
- * Process a receipt image using the user's Gemini API key
+ * Process a receipt image using the configured AI provider
  */
 export async function processReceipt(c: Context<{ Bindings: Env; Variables: Variables }>) {
     const env = c.env;
     const userId = c.get('userId');
     const dbService = new DBService(env.DB);
-    const encryptionService = new EncryptionService(env.ENCRYPTION_KEY);
-    const geminiService = new GeminiService();
 
     // Validate request body
     const validation = await validateRequest(c.req.raw, processReceiptSchema);
@@ -29,33 +33,106 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         return error(validation.error, 400);
     }
 
-    const { image, model } = validation.data;
+    const { image } = validation.data;
 
-    // Get user's API key
-    const apiKeyRecord = await dbService.getApiKey(userId);
-    if (!apiKeyRecord || !apiKeyRecord.encrypted_key) {
-        return error('API key not configured. Please add your Gemini API key in settings.', 400);
+    // Check AI usage rate limit
+    const rateLimitService = new RateLimitService(dbService, 'ai_receipt_processing', AI_RATE_LIMIT);
+    const isAllowed = await rateLimitService.isAllowed(userId);
+
+    if (!isAllowed) {
+        // Get current usage for better error message
+        const now = Date.now();
+        const windowStart = now - AI_RATE_LIMIT.window * 1000;
+        const recentRequests = await dbService.getRateLimitRequests('ai_receipt_processing', userId, windowStart);
+
+        // Calculate reset time
+        const oldestRequest = Math.min(...recentRequests.map(r => r.created_at));
+        const resetAt = (oldestRequest + AI_RATE_LIMIT.window) * 1000;
+        const hoursUntilReset = Math.ceil((resetAt - now) / (1000 * 60 * 60));
+
+        return error(
+            `Daily AI scan limit reached (10/10 used). Your quota will reset in approximately ${hoursUntilReset} hour${hoursUntilReset !== 1 ? 's' : ''}. Try again later!`,
+            429
+        );
     }
 
-    // Decrypt the API key
-    const apiKey = await encryptionService.decrypt(apiKeyRecord.encrypted_key);
-    if (!apiKey) {
-        return error('Failed to decrypt API key', 500);
+    // Get user's AI provider preference (fallback to env, then gemini)
+    const userSettings = await dbService.getApiKey(userId);
+    const providerType = (userSettings?.ai_provider || env.AI_PROVIDER || 'gemini') as AIProviderType;
+    const modelName = env.AI_MODEL;
+
+    try {
+        // Get the appropriate API key for the provider
+        const apiKey = AIProviderFactory.getApiKey(env, providerType);
+
+        // Create AI provider instance
+        const aiProvider = AIProviderFactory.createProvider(providerType, apiKey, modelName);
+
+        // Process the receipt
+        const result = await aiProvider.processReceipt(image);
+
+        if (!result.success) {
+            return error(result.error || 'Failed to process receipt', 500);
+        }
+
+        // Record the AI usage (only after successful processing)
+        await rateLimitService.recordRequest(userId);
+
+        // Get user's default currency (check api_keys table for backward compatibility)
+        const apiKeyRecord = await dbService.getApiKey(userId);
+        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
+
+        // Add user's default currency to the response
+        const expenseData = {
+            ...result.data,
+            currency: defaultCurrency,
+        };
+
+        return json(success(expenseData));
+    } catch (err: any) {
+        console.error('Receipt processing error:', err);
+        return error(err.message || 'Failed to process receipt', 500);
     }
+}
 
-    // Process the receipt with Gemini (default to lightweight model if not provided)
-    const selectedModel = model || 'gemini-2.5-flash-lite';
-    const result = await geminiService.processReceipt(apiKey, image, selectedModel);
+/**
+ * GET /api/receipts/quota
+ * Get the user's remaining AI usage quota
+ */
+export async function getAIQuota(c: Context<{ Bindings: Env; Variables: Variables }>) {
+    const userId = c.get('userId');
+    const dbService = new DBService(c.env.DB);
 
-    if (!result.success) {
-        return error(result.error || 'Failed to process receipt', 500);
+    try {
+        const rateLimitService = new RateLimitService(dbService, 'ai_receipt_processing', AI_RATE_LIMIT);
+
+        // Get current usage
+        const now = Date.now();
+        const windowStart = now - AI_RATE_LIMIT.window * 1000;
+        const recentRequests = await dbService.getRateLimitRequests('ai_receipt_processing', userId, windowStart);
+
+        const used = recentRequests.length;
+        const remaining = Math.max(0, AI_RATE_LIMIT.limit - used);
+        const limit = AI_RATE_LIMIT.limit;
+
+        // Calculate reset time (24 hours from oldest request, or now if no requests)
+        let resetAt: number;
+        if (recentRequests.length > 0) {
+            const oldestRequest = Math.min(...recentRequests.map(r => r.created_at));
+            resetAt = (oldestRequest + AI_RATE_LIMIT.window) * 1000; // Convert to milliseconds
+        } else {
+            resetAt = now + AI_RATE_LIMIT.window * 1000;
+        }
+
+        return json(success({
+            limit,
+            used,
+            remaining,
+            resetAt,
+            resetIn: Math.max(0, Math.ceil((resetAt - now) / 1000)), // Seconds until reset
+        }));
+    } catch (err: any) {
+        console.error('Failed to get AI quota:', err);
+        return error('Failed to retrieve AI usage quota', 500);
     }
-
-    // Add user's default currency to the response
-    const expenseData = {
-        ...result.data,
-        currency: apiKeyRecord.default_currency || 'USD',
-    };
-
-    return json(success(expenseData));
 }
