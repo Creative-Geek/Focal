@@ -14,9 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
 const AI_PROVIDERS = [
-  { value: "gemini", label: "Google Gemini - Accurate" },
-  { value: "openai", label: "OpenAI GPT-4o - Fast" },
-  { value: "nvidia", label: "Nvidia NIM - Very Fast" },
+  { value: "gemini", label: "Google Gemini" },
+  { value: "openai", label: "OpenAI GPT-4o" },
+  { value: "nvidia", label: "Nvidia NIM (Experimental)" },
 ];
 const API_BASE_URL = "/api";
 
