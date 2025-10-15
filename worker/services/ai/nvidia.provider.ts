@@ -20,6 +20,33 @@ export class NvidiaProvider extends BaseAIProvider {
         try {
             const { imageData, mimeType } = this.parseBase64Image(base64Image);
 
+            // Define JSON schema for structured output
+            const jsonSchema = {
+                type: 'object',
+                properties: {
+                    merchant: { type: 'string' },
+                    date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+                    total: { type: 'number' },
+                    category: {
+                        type: 'string',
+                        enum: ['Food & Drink', 'Groceries', 'Travel', 'Shopping', 'Utilities', 'Other'],
+                    },
+                    lineItems: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                description: { type: 'string' },
+                                quantity: { type: 'number' },
+                                price: { type: 'number' },
+                            },
+                            required: ['description', 'quantity', 'price'],
+                        },
+                    },
+                },
+                required: ['merchant', 'date', 'total', 'category', 'lineItems'],
+            };
+
             // Prepare the message with image
             const messages = [
                 {
@@ -27,14 +54,7 @@ export class NvidiaProvider extends BaseAIProvider {
                     content: [
                         {
                             type: 'text',
-                            text: `${this.getSystemInstruction()}\n\nPlease extract the receipt information and respond with ONLY a valid JSON object matching this structure:
-{
-  "merchant": "string",
-  "date": "YYYY-MM-DD",
-  "total": number,
-  "category": "Food & Drink" | "Groceries" | "Travel" | "Shopping" | "Utilities" | "Other",
-  "lineItems": [{"description": "string", "quantity": number, "price": number}]
-}`,
+                            text: this.getSystemInstruction(),
                         },
                         {
                             type: 'image_url',
@@ -53,6 +73,11 @@ export class NvidiaProvider extends BaseAIProvider {
                 temperature: 0.1,
                 top_p: 0.95,
                 stream: false,
+                extra_body: {
+                    nvext: {
+                        guided_json: jsonSchema,
+                    },
+                },
             };
 
             const response = await fetch(this.invokeUrl, {
@@ -77,14 +102,26 @@ export class NvidiaProvider extends BaseAIProvider {
                 throw new Error('No response from Nvidia API');
             }
 
-            // Parse the JSON response (may need to extract from markdown code blocks)
+            // Parse the JSON response
+            // With guided_json, the response should be clean JSON
+            // But keep fallback extraction for robustness
             let jsonText = content.trim();
 
-            // Remove markdown code blocks if present
+            // Try to extract JSON from markdown code blocks if present
             if (jsonText.startsWith('```json')) {
                 jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             } else if (jsonText.startsWith('```')) {
                 jsonText = jsonText.replace(/```\n?/g, '').trim();
+            }
+
+            // If guided_json failed and we have prose text, try to extract JSON with regex
+            if (!jsonText.startsWith('{')) {
+                const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    jsonText = jsonMatch[0];
+                } else {
+                    throw new Error('Could not extract valid JSON from response');
+                }
             }
 
             const expenseData = JSON.parse(jsonText);
