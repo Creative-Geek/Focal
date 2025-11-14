@@ -1,7 +1,6 @@
 import { Context } from 'hono';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
-import { EncryptionService } from '../services/encryption.service';
 import { success, error, json } from '../utils/response';
 
 type Variables = {
@@ -45,18 +44,8 @@ export async function updateCurrency(c: Context<{ Bindings: Env; Variables: Vari
             return error('Invalid currency', 400);
         }
 
-        // Get existing API key record
-        const apiKey = await dbService.getApiKey(userId);
-        if (!apiKey) {
-            // Create a placeholder API key record with empty encrypted key
-            const encryptionService = new EncryptionService(env.ENCRYPTION_KEY);
-            const emptyEncrypted = await encryptionService.encrypt('');
-            const apiKeyId = crypto.randomUUID();
-            await dbService.saveApiKey(apiKeyId, userId, emptyEncrypted, defaultCurrency);
-        } else {
-            // Update existing record - preserve the existing AI provider
-            await dbService.saveApiKey(apiKey.id, userId, apiKey.encrypted_key, defaultCurrency, apiKey.ai_provider || 'gemini');
-        }
+        // Update only the currency field (won't affect ai_provider)
+        await dbService.updateCurrency(userId, defaultCurrency);
 
         return json(success({ message: 'Currency updated successfully', defaultCurrency }));
     } catch (err) {
