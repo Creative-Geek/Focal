@@ -4,7 +4,13 @@ import { DBService } from '../services/db.service';
 import { RateLimitService, RateLimitConfig } from '../services/rateLimit.service';
 import { error } from '../utils/response';
 
-type IdentifierFn = (c: Context<{ Bindings: Env }>) => Promise<string | null>;
+type Variables = {
+    userId: string;
+    userEmail: string;
+    token: string;
+};
+
+type IdentifierFn = (c: Context<{ Bindings: Env; Variables: Variables }>) => Promise<string | null>;
 
 /**
  * Rate limiting middleware factory.
@@ -16,7 +22,7 @@ type IdentifierFn = (c: Context<{ Bindings: Env }>) => Promise<string | null>;
  * @returns A Hono middleware function.
  */
 export function rateLimit(action: string, config: RateLimitConfig, getIdentifier: IdentifierFn) {
-    return async (c: Context<{ Bindings: Env }>, next: Next) => {
+    return async (c: Context<{ Bindings: Env; Variables: Variables }>, next: Next) => {
         const env = c.env;
         const dbService = new DBService(env.DB);
         const rateLimitService = new RateLimitService(dbService, action, config);
@@ -46,15 +52,15 @@ export function rateLimit(action: string, config: RateLimitConfig, getIdentifier
  * Identifier function for authenticated users.
  * Uses the user ID from the context.
  */
-export const byUserId: IdentifierFn = async (c: Context<{ Bindings: Env }>) => {
-    return c.get('userId');
+export const byUserId: IdentifierFn = async (c: Context<{ Bindings: Env; Variables: Variables }>) => {
+    return c.get('userId') || null;
 };
 
 /**
  * Identifier function for public routes that use an email address.
  * Extracts the email from the JSON request body.
  */
-export const byEmail: IdentifierFn = async (c: Context<{ Bindings: Env }>) => {
+export const byEmail: IdentifierFn = async (c: Context<{ Bindings: Env; Variables: Variables }>) => {
     try {
         const body = await c.req.json();
         return body.email || null;
