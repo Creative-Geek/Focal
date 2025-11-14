@@ -2,6 +2,13 @@ import React, { useCallback, useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Trash2, Plus, ScanLine } from "lucide-react";
 import type { ExpenseData } from "@/lib/expense-service";
 interface ExpenseFormProps {
@@ -101,12 +108,24 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
           <Label htmlFor="category" className="text-sm">
             Category
           </Label>
-          <Input
-            id="category"
+          <Select
             value={value.category}
-            onChange={(e) => handleFieldChange("category", e.target.value)}
-            className="text-sm sm:text-base"
-          />
+            onValueChange={(newValue) =>
+              handleFieldChange("category", newValue)
+            }
+          >
+            <SelectTrigger className="text-sm sm:text-base">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Food & Drink">Food & Drink</SelectItem>
+              <SelectItem value="Groceries">Groceries</SelectItem>
+              <SelectItem value="Travel">Travel</SelectItem>
+              <SelectItem value="Shopping">Shopping</SelectItem>
+              <SelectItem value="Utilities">Utilities</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="sm:col-span-1">
           <Label htmlFor="currency" className="text-sm">
