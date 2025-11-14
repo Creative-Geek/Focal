@@ -8,12 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Resize an image to a maximum dimension while maintaining aspect ratio
  * @param base64Image - Base64 encoded image string (with data:image prefix)
- * @param maxDimension - Maximum width or height in pixels (default: 1200)
+ * @param maxDimension - Maximum width or height in pixels (default: 1000)
  * @returns Promise<string> - Resized base64 image
  */
 export async function resizeImage(
   base64Image: string,
-  maxDimension: number = 1200
+  maxDimension: number = 1000
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
