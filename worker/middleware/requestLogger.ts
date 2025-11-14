@@ -7,7 +7,7 @@ import { Env } from '../types';
  */
 export async function requestLogger(c: Context<{ Bindings: Env }>, next: Next) {
     const method = c.req.method;
-    
+
     // Skip logging for GET requests (read operations)
     if (method === 'GET') {
         await next();
@@ -22,7 +22,7 @@ export async function requestLogger(c: Context<{ Bindings: Env }>, next: Next) {
     } finally {
         const duration = Date.now() - startTime;
         const status = c.res.status;
-        
+
         // Log the request details
         console.log(
             `[${method}] ${path} - ${status} - ${duration}ms`
