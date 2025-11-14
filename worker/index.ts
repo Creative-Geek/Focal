@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Env } from './types';
 import { corsMiddleware } from './middleware/cors';
+import { requestLogger } from './middleware/requestLogger';
 import { createRouter } from './router';
 
 /**
@@ -11,6 +12,9 @@ const app = new Hono<{ Bindings: Env }>();
 
 // Apply CORS middleware to all routes
 app.use('*', corsMiddleware);
+
+// Apply request logging middleware to all routes
+app.use('*', requestLogger);
 
 // Health check endpoint
 app.get('/health', (c) => {
