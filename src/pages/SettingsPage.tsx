@@ -17,6 +17,7 @@ const AI_PROVIDERS = [
   { value: "gemini", label: "Google Gemini" },
   { value: "openai", label: "OpenAI GPT-4o" },
   { value: "nvidia", label: "Nvidia NIM (Experimental)" },
+  { value: "groq", label: "Groq (OCR + LLM)" },
 ];
 const API_BASE_URL = "/api";
 

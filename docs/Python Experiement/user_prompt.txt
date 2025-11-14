@@ -1,0 +1,15 @@
+<user_request>
+    <instructions>
+    Please extract the information from the following receipt text according to the schema provided below.
+    </instructions>
+    
+    <receipt_text>
+    {ocr_text}
+    </receipt_text>
+    
+    <output_schema>
+    Here is the JSON schema you must follow. Ensure your output is a single, valid JSON object matching this structure exactly.
+    
+    {format_instructions}
+    </output_schema>
+</user_request>

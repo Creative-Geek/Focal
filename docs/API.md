@@ -43,13 +43,13 @@ The API enforces rate limiting on certain endpoints to prevent abuse.
 
 This table stores user-specific settings, including their preferred AI provider and default currency.
 
-| Column             | Type        | Description                                               |
-| :----------------- | :---------- | :-------------------------------------------------------- |
-| `id`               | `TEXT`      | Primary Key, UUID                                         |
-| `user_id`          | `TEXT`      | Foreign Key to `users.id`, Unique                         |
-| `default_currency` | `TEXT`      | 3-letter ISO code, Default `'USD'`                        |
-| `ai_provider`      | `TEXT`      | `'gemini'`, `'openai'`, or `'nvidia'`, Default `'gemini'` |
-| `created_at`       | `TIMESTAMP` | Default `CURRENT_TIMESTAMP`                               |
+| Column             | Type        | Description                                                         |
+| :----------------- | :---------- | :------------------------------------------------------------------ |
+| `id`               | `TEXT`      | Primary Key, UUID                                                   |
+| `user_id`          | `TEXT`      | Foreign Key to `users.id`, Unique                                   |
+| `default_currency` | `TEXT`      | 3-letter ISO code, Default `'USD'`                                  |
+| `ai_provider`      | `TEXT`      | `'gemini'`, `'openai'`, `'nvidia'`, or `'groq'`, Default `'gemini'` |
+| `created_at`       | `TIMESTAMP` | Default `CURRENT_TIMESTAMP`                                         |
 
 ---
 

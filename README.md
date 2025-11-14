@@ -15,8 +15,8 @@ A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-pow
 ## ✨ Features
 
 - 📸 **AI Receipt Scanning** - Extract expense details from photos using multiple AI providers.
-- 🔄 **Multi-Provider Support** - Supports Google Gemini, OpenAI GPT-4o, and Nvidia NIM.
-- � **User-Selectable AI** - Users can choose their preferred AI provider.
+- 🔄 **Multi-Provider Support** - Supports Google Gemini, OpenAI GPT-4o, Nvidia NIM, and Groq (OCR+LLM).
+- 🧠 **User-Selectable AI** - Users can choose their preferred AI provider.
 - 📊 **Rate Limiting** - Daily quota for AI scans to manage costs.
 - 💰 **Expense Tracking** - Manage expenses with categories, amounts, and notes.
 - 🔐 **Secure Auth** - JWT-based authentication with bcrypt password hashing.
@@ -63,7 +63,7 @@ Visit [http://localhost:3000](http://localhost:3000) to get started!
 
 **Backend:** Cloudflare Workers • Hono.js • D1 (SQLite)
 
-**AI Providers:** Google Gemini • OpenAI • Nvidia NIM
+**AI Providers:** Google Gemini • OpenAI • Nvidia NIM • Groq + Azure Vision
 
 **Tools:** ESLint • Wrangler • pnpm
 

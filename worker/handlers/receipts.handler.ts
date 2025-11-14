@@ -61,12 +61,20 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
     const providerType = (userSettings?.ai_provider || env.AI_PROVIDER || 'gemini') as AIProviderType;
     const modelName = env.AI_MODEL;
 
+    console.log('[Receipt Handler] Selected provider:', providerType);
+    console.log('[Receipt Handler] User setting:', userSettings?.ai_provider);
+    console.log('[Receipt Handler] Env default:', env.AI_PROVIDER);
+
     try {
         // Get the appropriate API key for the provider
         const apiKey = AIProviderFactory.getApiKey(env, providerType);
 
-        // Create AI provider instance
-        const aiProvider = AIProviderFactory.createProvider(providerType, apiKey, modelName);
+        console.log('[Receipt Handler] Creating provider instance...');
+
+        // Create AI provider instance (pass env for Groq provider Azure credentials)
+        const aiProvider = AIProviderFactory.createProvider(providerType, apiKey, modelName, env);
+
+        console.log('[Receipt Handler] Processing receipt with', providerType);
 
         // Process the receipt
         const result = await aiProvider.processReceipt(image);

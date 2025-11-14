@@ -151,3 +151,5 @@ prompts/usage.md
 email-preview.html
 nul
 pnpm-workspace.yaml
+docs/GROQ_PROVIDER.md
+docs/GROQ_IMPLEMENTATION.md

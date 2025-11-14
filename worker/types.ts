@@ -10,13 +10,18 @@ export interface Env {
     APP_URL?: string; // Optional: Application URL for email links (defaults to localhost in dev)
 
     // AI Provider Configuration
-    AI_PROVIDER?: string; // AI provider to use: 'gemini' | 'openai' | 'nvidia' (defaults to 'gemini')
+    AI_PROVIDER?: string; // AI provider to use: 'gemini' | 'openai' | 'nvidia' | 'groq' (defaults to 'gemini')
     AI_MODEL?: string; // Optional: Override default model for the provider
 
     // AI Provider API Keys (configure the one matching your AI_PROVIDER)
     GEMINI_API_KEY?: string; // For Google Gemini (gemini-2.5-flash, gemini-2.5-pro, etc.)
     GITHUB_TOKEN?: string; // For GitHub Models (OpenAI GPT-4o)
     NVIDIA_API_KEY?: string; // For Nvidia NIM (llama-3.2-90b-vision-instruct)
+    GROQ_API_KEY?: string; // For Groq (llama-3.3-70b-versatile, etc.)
+
+    // Azure Computer Vision (required for Groq provider OCR)
+    AZURE_VISION_ENDPOINT?: string; // Azure Computer Vision endpoint
+    AZURE_VISION_KEY?: string; // Azure Computer Vision API key
 }
 
 export interface User {
@@ -35,7 +40,7 @@ export interface ApiKey {
     user_id: string;
     encrypted_key: string;
     default_currency: string;
-    ai_provider?: string; // User's preferred AI provider: 'gemini' | 'openai' | 'nvidia'
+    ai_provider?: string; // User's preferred AI provider: 'gemini' | 'openai' | 'nvidia' | 'groq'
     created_at: number;
 }
 

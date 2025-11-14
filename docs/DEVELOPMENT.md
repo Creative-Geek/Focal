@@ -33,10 +33,15 @@ NODE_ENV="development"
 # AI Providers (Required)
 # Choose a default provider and provide the necessary API keys.
 # All keys are required for the user selection feature to work.
-AI_PROVIDER="gemini" # 'gemini' | 'openai' | 'nvidia'
+AI_PROVIDER="gemini" # 'gemini' | 'openai' | 'nvidia' | 'groq'
 GEMINI_API_KEY="your-google-gemini-api-key"
-OPENAI_API_KEY="your-openai-api-key"
+GITHUB_TOKEN="your-github-token"  # For OpenAI via GitHub Models
 NVIDIA_API_KEY="your-nvidia-api-key"
+GROQ_API_KEY="your-groq-api-key"
+
+# Azure Computer Vision (Required for Groq provider only)
+AZURE_VISION_ENDPOINT="https://your-resource.cognitiveservices.azure.com/"
+AZURE_VISION_KEY="your-azure-vision-key"
 
 # Email Service (Optional, for email verification/password reset)
 BREVO_API_KEY="your-brevo-api-key"
@@ -86,14 +91,20 @@ Focal supports multiple AI providers for receipt scanning. The system is configu
 
 ### Supported Providers
 
-- **Google Gemini** (`gemini`)
-- **OpenAI GPT-4o** (`openai`)
-- **Nvidia NIM** (`nvidia`)
+- **Google Gemini** (`gemini`) - Vision AI, fast and accurate
+- **OpenAI GPT-4o** (`openai`) - Vision AI via GitHub Models, high accuracy
+- **Nvidia NIM** (`nvidia`) - Vision AI, experimental
+- **Groq (OCR + LLM)** (`groq`) - Uses Azure Computer Vision for OCR + Groq's small LLM for structuring, cost-effective
 
 ### Configuration
 
 - The default provider for new users is set by the `AI_PROVIDER` environment variable in `.dev.vars`.
-- All API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `NVIDIA_API_KEY`) must be configured in `.dev.vars` for the provider selection to work correctly.
+- All API keys must be configured in `.dev.vars` for the provider selection to work correctly:
+  - `GEMINI_API_KEY` - For Google Gemini
+  - `GITHUB_TOKEN` - For OpenAI via GitHub Models
+  - `NVIDIA_API_KEY` - For Nvidia NIM
+  - `GROQ_API_KEY` - For Groq
+  - `AZURE_VISION_ENDPOINT` and `AZURE_VISION_KEY` - For Groq provider (OCR component)
 - In production, these are set as secrets in your Cloudflare worker.
 
 ### User Selection

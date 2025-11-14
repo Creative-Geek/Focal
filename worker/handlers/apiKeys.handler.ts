@@ -96,8 +96,8 @@ export async function updateAIProvider(c: Context<{ Bindings: Env; Variables: Va
         const { aiProvider } = body;
 
         // Validate provider
-        if (!aiProvider || !['gemini', 'openai', 'nvidia'].includes(aiProvider)) {
-            return error('Invalid AI provider. Must be one of: gemini, openai, nvidia', 400);
+        if (!aiProvider || !['gemini', 'openai', 'nvidia', 'groq'].includes(aiProvider)) {
+            return error('Invalid AI provider. Must be one of: gemini, openai, nvidia, groq', 400);
         }
 
         // Update provider

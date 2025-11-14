@@ -18,7 +18,7 @@ database_id = "85a073b1-3c48-4a21-bf35-68e7c473d654"
 # Environment variables (use wrangler secrets for production)
 [vars]
 NODE_ENV = "production"
-AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia'
+AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
 
 # Production secrets (set using wrangler secret put):
 # JWT_SECRET - Secret key for JWT token signing
@@ -30,4 +30,7 @@ AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia'
 # GEMINI_API_KEY - Google Gemini API key (for AI_PROVIDER=gemini)
 # GITHUB_TOKEN - GitHub token for GitHub Models (for AI_PROVIDER=openai)
 # NVIDIA_API_KEY - Nvidia NIM API key (for AI_PROVIDER=nvidia)
-# AI_MODEL - (Optional) Override default model (e.g., 'gemini-2.5-pro', 'gpt-4o', 'meta/llama-3.2-90b-vision-instruct')
+# GROQ_API_KEY - Groq API key (for AI_PROVIDER=groq)
+# AZURE_VISION_ENDPOINT - Azure Computer Vision endpoint (required for AI_PROVIDER=groq)
+# AZURE_VISION_KEY - Azure Computer Vision API key (required for AI_PROVIDER=groq)
+# AI_MODEL - (Optional) Override default model (e.g., 'gemini-2.5-pro', 'gpt-4o', 'llama-3.3-70b-versatile')
