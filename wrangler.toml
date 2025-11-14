@@ -34,3 +34,10 @@ AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
 # AZURE_VISION_ENDPOINT - Azure Computer Vision endpoint (required for AI_PROVIDER=groq)
 # AZURE_VISION_KEY - Azure Computer Vision API key (required for AI_PROVIDER=groq)
 # AI_MODEL - (Optional) Override default model (e.g., 'gemini-2.5-pro', 'gpt-4o', 'llama-3.3-70b-versatile')
+
+[observability]
+[observability.logs]
+enabled = false
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
