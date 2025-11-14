@@ -15,7 +15,7 @@ export class GroqProvider extends BaseAIProvider {
         groqApiKey: string,
         azureEndpoint: string,
         azureApiKey: string,
-        modelName: string = 'llama-3.3-70b-versatile'
+        modelName: string = 'openai/gpt-oss-20b'
     ) {
         super();
         this.groqApiKey = groqApiKey;

@@ -41,7 +41,7 @@ export class AIProviderFactory {
                     apiKey,
                     env.AZURE_VISION_ENDPOINT,
                     env.AZURE_VISION_KEY,
-                    modelName || 'llama-3.3-70b-versatile'
+                    modelName || 'openai/gpt-oss-20b'
                 );
 
             default:
@@ -95,7 +95,7 @@ export class AIProviderFactory {
             case 'nvidia':
                 return 'meta/llama-3.2-90b-vision-instruct';
             case 'groq':
-                return 'llama-3.3-70b-versatile';
+                return 'openai/gpt-oss-20b';
             default:
                 return '';
         }
