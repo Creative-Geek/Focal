@@ -54,8 +54,8 @@ export async function updateCurrency(c: Context<{ Bindings: Env; Variables: Vari
             const apiKeyId = crypto.randomUUID();
             await dbService.saveApiKey(apiKeyId, userId, emptyEncrypted, defaultCurrency);
         } else {
-            // Update existing record
-            await dbService.saveApiKey(apiKey.id, userId, apiKey.encrypted_key, defaultCurrency);
+            // Update existing record - preserve the existing AI provider
+            await dbService.saveApiKey(apiKey.id, userId, apiKey.encrypted_key, defaultCurrency, apiKey.ai_provider || 'gemini');
         }
 
         return json(success({ message: 'Currency updated successfully', defaultCurrency }));
@@ -105,6 +105,7 @@ export async function updateAIProvider(c: Context<{ Bindings: Env; Variables: Va
 
         return json(success({ message: 'AI provider updated successfully', aiProvider }));
     } catch (err) {
+        console.error('[API Handler] updateAIProvider error:', err);
         return error('Invalid request body', 400);
     }
 }
