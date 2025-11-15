@@ -98,9 +98,14 @@ function ReviewForm(props: {
   }, [extractedData, originalData]);
 
   const handleCloseAttempt = () => {
-    if (isDirty && !isSaving) {
+    if (isDirty && !isSaving && !isProcessing) {
       setIsConfirmationOpen(true);
-    } else {
+    } else if (!isSaving) {
+      // If processing, also reset isProcessing state when closing
+      if (isProcessing) {
+        // Note: This won't cancel the API request, but will reset the UI
+        console.log("User canceled during processing");
+      }
       setExtractedData(null);
     }
   };
@@ -258,8 +263,12 @@ export const HomePage: React.FC = () => {
   }, []);
 
   const handleImageProcessing = async (base64Image: string) => {
+    // Reset all states before starting
     setIsProcessing(true);
     setError(null);
+    setExtractedData(null);
+    setOriginalData(null);
+
     try {
       // Resize image to max 1200x1200 before sending to API
       const resizedImage = await resizeImage(base64Image, 1200);
@@ -277,26 +286,31 @@ export const HomePage: React.FC = () => {
         toast.error("Processing Failed", { description: response.error });
       }
     } catch (e) {
-      setError("An unexpected error occurred during processing.");
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : "An unexpected error occurred during processing.";
+      setError(errorMessage);
       toast.error("Processing Error", {
         description: "Could not connect to the server.",
       });
+      console.error("Receipt processing error:", e);
     } finally {
       setIsProcessing(false);
     }
   };
   const capture = useCallback(async () => {
-    if (webcamRef.current) {
+    if (webcamRef.current && !isProcessing) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setIsCameraOpen(false);
         handleImageProcessing(imageSrc);
       }
     }
-  }, [webcamRef]);
+  }, [webcamRef, isProcessing]);
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && !isProcessing) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64Image = e.target?.result as string;
@@ -304,8 +318,15 @@ export const HomePage: React.FC = () => {
           handleImageProcessing(base64Image);
         }
       };
+      reader.onerror = () => {
+        toast.error("Upload Error", {
+          description: "Failed to read the image file.",
+        });
+      };
       reader.readAsDataURL(file);
     }
+    // Reset the input so the same file can be selected again
+    event.target.value = "";
   };
 
   const handleManualEntry = () => {
@@ -378,17 +399,38 @@ export const HomePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
             <Button
               size="lg"
-              onClick={() => setIsCameraOpen(true)}
-              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              onClick={() => {
+                if (!isProcessing && !isSaving) {
+                  setError(null); // Clear any previous errors
+                  setIsCameraOpen(true);
+                }
+              }}
+              disabled={isProcessing || isSaving}
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-              Scan Receipt
+              {isProcessing ? (
+                <>
+                  <Loader className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
+                  Scan Receipt
+                </>
+              )}
             </Button>
             <Button
               size="lg"
               variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              onClick={() => {
+                if (!isProcessing && !isSaving) {
+                  setError(null); // Clear any previous errors
+                  fileInputRef.current?.click();
+                }
+              }}
+              disabled={isProcessing || isSaving}
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Upload Photo
@@ -397,7 +439,8 @@ export const HomePage: React.FC = () => {
               size="lg"
               variant="outline"
               onClick={handleManualEntry}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto"
+              disabled={isProcessing || isSaving}
+              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <PenLine className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
               Manual Entry
@@ -451,15 +494,21 @@ export const HomePage: React.FC = () => {
             <div className="flex items-center gap-4 mt-6">
               <Button
                 onClick={capture}
-                className="w-20 h-20 rounded-full bg-white hover:bg-gray-200 ring-4 ring-white ring-offset-4 ring-offset-black/50"
+                disabled={isProcessing}
+                className="w-20 h-20 rounded-full bg-white hover:bg-gray-200 ring-4 ring-white ring-offset-4 ring-offset-black/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Camera className="h-10 w-10 text-black" />
+                {isProcessing ? (
+                  <Loader className="h-10 w-10 text-black animate-spin" />
+                ) : (
+                  <Camera className="h-10 w-10 text-black" />
+                )}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsCameraOpen(false)}
-                className="absolute top-6 right-6 text-white hover:bg-white/20 w-12 h-12 rounded-full"
+                onClick={() => !isProcessing && setIsCameraOpen(false)}
+                disabled={isProcessing}
+                className="absolute top-6 right-6 text-white hover:bg-white/20 w-12 h-12 rounded-full disabled:opacity-50"
               >
                 <X className="h-8 w-8" />
               </Button>
