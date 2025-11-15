@@ -132,7 +132,7 @@ Extract the merchant, date, total, category, and line items. Return ONLY a valid
                         },
                     ],
                     temperature: 0.2,
-                    max_tokens: 2000,
+                    max_tokens: 4000,
                     response_format: {
                         type: 'json_object',
                     },
