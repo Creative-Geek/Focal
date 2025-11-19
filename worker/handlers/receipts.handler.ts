@@ -3,6 +3,7 @@ import { Env } from '../types';
 import { DBService } from '../services/db.service';
 import { RateLimitService } from '../services/rateLimit.service';
 import { AIProviderFactory, AIProviderType } from '../services/ai/factory';
+import { AudioService } from '../services/audio.service';
 import { validateRequest, processReceiptSchema } from '../utils/validation';
 import { success, error, json } from '../utils/response';
 
@@ -100,6 +101,83 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
     } catch (err: any) {
         console.error('Receipt processing error:', err);
         return error(err.message || 'Failed to process receipt', 500);
+    }
+}
+
+/**
+ * POST /api/receipts/process-audio
+ * Process an audio file using Gemini
+ */
+export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables: Variables }>) {
+    const env = c.env;
+    const userId = c.get('userId');
+    const dbService = new DBService(env.DB);
+
+    // Check AI usage rate limit
+    const rateLimitService = new RateLimitService(dbService, 'ai_receipt_processing', AI_RATE_LIMIT);
+    const isAllowed = await rateLimitService.isAllowed(userId);
+
+    if (!isAllowed) {
+        // Get current usage for better error message
+        const now = Date.now();
+        const windowStart = now - AI_RATE_LIMIT.window * 1000;
+        const recentRequests = await dbService.getRateLimitRequests('ai_receipt_processing', userId, windowStart);
+
+        // Calculate reset time
+        const oldestRequest = Math.min(...recentRequests.map(r => r.created_at));
+        const resetAt = (oldestRequest + AI_RATE_LIMIT.window) * 1000;
+        const hoursUntilReset = Math.ceil((resetAt - now) / (1000 * 60 * 60));
+
+        return error(
+            `Daily AI scan limit reached (10/10 used). Your quota will reset in approximately ${hoursUntilReset} hour${hoursUntilReset !== 1 ? 's' : ''}. Try again later!`,
+            429
+        );
+    }
+
+    try {
+        const body = await c.req.parseBody();
+        const audioFile = body['audio'] as File;
+
+        if (!audioFile) {
+            return error('No audio file provided', 400);
+        }
+
+        if (!audioFile.type.startsWith('audio/')) {
+            return error('Invalid file type. Please upload an audio file.', 400);
+        }
+
+        // Get Gemini API key
+        const apiKey = AIProviderFactory.getApiKey(env, 'gemini');
+
+        // Process audio
+        const audioService = new AudioService();
+        const arrayBuffer = await audioFile.arrayBuffer();
+
+        console.log('[Receipt Handler] Processing audio receipt...');
+        const result = await audioService.processAudio(apiKey, arrayBuffer, audioFile.type);
+
+        if (!result.success) {
+            return error(result.error || 'Failed to process audio', 500);
+        }
+
+        // Record the AI usage (only after successful processing)
+        await rateLimitService.recordRequest(userId);
+
+        // Get user's default currency
+        const apiKeyRecord = await dbService.getApiKey(userId);
+        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
+
+        // Add default currency to each receipt
+        const receipts = result.data.map((receipt: any) => ({
+            ...receipt,
+            currency: defaultCurrency,
+        }));
+
+        return json(success({ receipts }));
+
+    } catch (err: any) {
+        console.error('Audio processing error:', err);
+        return error(err.message || 'Failed to process audio', 500);
     }
 }
 

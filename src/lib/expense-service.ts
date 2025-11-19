@@ -56,6 +56,42 @@ class ExpenseService {
   }
 
   /**
+   * Process an audio file using the backend API
+   */
+  async processAudioReceipt(audioBlob: Blob): Promise<{ success: boolean; data?: ExpenseData[]; error?: string }> {
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob);
+
+      const response = await fetch(`${API_BASE_URL}/receipts/process-audio`, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeaders()['Authorization'] as string,
+        },
+        credentials: 'include',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || 'Failed to process audio',
+        };
+      }
+
+      return { success: true, data: result.data.receipts };
+    } catch (error: any) {
+      console.error('Error processing audio:', error);
+      return {
+        success: false,
+        error: error.message || 'An unexpected error occurred while processing the audio.',
+      };
+    }
+  }
+
+  /**
    * Save a new expense
    */
   async saveExpense(expenseData: ExpenseData): Promise<{ success: boolean; data?: Expense; error?: string }> {

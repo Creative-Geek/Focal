@@ -65,8 +65,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { EditExpenseDialog } from "@/components/EditExpenseDialog";
+import { AddExpenseMenu } from "@/components/AddExpenseMenu";
+import { ReceiptReviewDialog } from "@/components/ReceiptReviewDialog";
+import { ReviewExpenseDialog } from "@/components/ReviewExpenseDialog";
 import { Toaster } from "@/components/ui/sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { ExpenseData } from "@/lib/expense-service";
+import { useExpenseCreation } from "@/hooks/useExpenseCreation";
+import Webcam from "react-webcam";
+import { Camera, X, Lightbulb, Loader } from "lucide-react";
+import { resizeImage } from "@/lib/utils";
+
 const formatCurrency = (amount: number, currency: string = "USD") => {
   // Validate currency code and fallback to USD if invalid
   const validCurrency =
@@ -141,6 +150,35 @@ export const ExpensesPage: React.FC = () => {
   // Track which expenses are expanded to show line items
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // Audio recording state
+  // Audio recording state
+  const [extractedReceipts, setExtractedReceipts] = useState<ExpenseData[]>([]);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  
+  // Camera state
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const webcamRef = React.useRef<Webcam>(null);
+  
+  const {
+    isProcessing,
+    isSaving,
+    extractedData,
+    setExtractedData,
+    originalData,
+    error: creationError,
+    setError: setCreationError,
+    handleImageProcessing,
+    handleAudioProcessing,
+    handleManualEntry,
+    handleSave,
+  } = useExpenseCreation();
+
+  const videoConstraints = {
+    width: 1280,
+    height: 720,
+    facingMode: "environment",
+  };
+
   const isMobile = useIsMobile();
 
   const toggleExpanded = (id: string) => {
@@ -189,6 +227,47 @@ export const ExpensesPage: React.FC = () => {
     fetchUserSettings();
     fetchExpenses();
   }, []);
+
+  const handleAudioComplete = async (blob: Blob) => {
+    const results = await handleAudioProcessing(blob);
+    if (results && results.length > 0) {
+      setExtractedReceipts(results);
+      setIsReviewDialogOpen(true);
+      toast.success(`Extracted ${results.length} receipt${results.length > 1 ? 's' : ''} from audio`);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Image = e.target?.result as string;
+      if (base64Image) {
+        handleImageProcessing(base64Image);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const capture = React.useCallback(async () => {
+    if (webcamRef.current && !isProcessing) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        setIsCameraOpen(false);
+        handleImageProcessing(imageSrc);
+      }
+    }
+  }, [webcamRef, isProcessing]);
+
+  const onSaveSuccess = async () => {
+    const success = await handleSave();
+    if (success) {
+      fetchExpenses();
+    }
+  };
+
+  const handleReviewSaveComplete = () => {
+    fetchExpenses();
+  };
   const filteredExpenses = useMemo(() => {
     // Apply month/year filter first
     let base = expenses;
@@ -324,9 +403,20 @@ export const ExpensesPage: React.FC = () => {
         className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 md:py-12"
       >
         <div className="space-y-4 sm:space-y-6 md:space-y-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
-            Expenses Dashboard
-          </h1>
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white">
+              Expenses Dashboard
+            </h1>
+            <div className="flex items-center gap-2">
+              <AddExpenseMenu
+                onScan={() => setIsCameraOpen(true)}
+                onUploadImage={handleImageUpload}
+                onAudioComplete={handleAudioComplete}
+                onManualEntry={handleManualEntry}
+                isProcessing={isProcessing}
+              />
+            </div>
+          </div>
           {isMobile && (
             <div>
               <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3">
@@ -761,7 +851,7 @@ export const ExpensesPage: React.FC = () => {
                     {formatCurrency(expense.total, expense.currency)}
                   </p>
                 </CardContent>
-                <CardFooter className="flex justify-end gap-2 pt-0">
+                <CardFooter className="pt-0 flex justify-end gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -770,7 +860,8 @@ export const ExpensesPage: React.FC = () => {
                       handleEdit(expense);
                     }}
                   >
-                    <Pencil className="h-4 w-4 mr-2" /> Edit
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -780,7 +871,8 @@ export const ExpensesPage: React.FC = () => {
                         className="text-destructive hover:text-destructive"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -803,58 +895,80 @@ export const ExpensesPage: React.FC = () => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </CardFooter>
-                <AnimatePresence initial={false}>
-                  {expanded[expense.id] && (
-                    <motion.div
-                      key={`mobile-details-${expense.id}`}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      style={{ overflow: "hidden" }}
-                    >
-                      <div className="px-4 pb-4">
-                        {expense.lineItems && expense.lineItems.length > 0 ? (
-                          <div className="space-y-2">
-                            {expense.lineItems.map((item, idx) => (
-                              <div
-                                key={idx}
-                                className="flex items-center justify-between rounded-md border p-2"
-                              >
-                                <div className="pr-2 text-sm">
-                                  {item.description}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  x{item.quantity}
-                                </div>
-                                <div className="ml-auto text-sm">
-                                  {formatCurrency(
-                                    item.quantity * item.price,
-                                    expense.currency
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-sm text-muted-foreground">
-                            No items
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </Card>
             ))}
           </div>
         </div>
       </motion.div>
+      <AnimatePresence>
+        {isCameraOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4"
+          >
+            <div className="relative w-full max-w-4xl">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+                className="rounded-lg shadow-2xl w-full"
+              />
+              <div className="absolute bottom-4 left-4 right-4 bg-black/50 text-white p-3 rounded-lg text-sm flex items-center gap-3">
+                <Lightbulb className="h-5 w-5 text-yellow-300 flex-shrink-0" />
+                <span>
+                  For best results: ensure good lighting and place the receipt
+                  on a flat, contrasting surface.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-6">
+              <Button
+                onClick={capture}
+                disabled={isProcessing}
+                className="w-20 h-20 rounded-full bg-white hover:bg-gray-200 ring-4 ring-white ring-offset-4 ring-offset-black/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <Loader className="h-10 w-10 text-black animate-spin" />
+                ) : (
+                  <Camera className="h-10 w-10 text-black" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => !isProcessing && setIsCameraOpen(false)}
+                disabled={isProcessing}
+                className="absolute top-6 right-6 text-white hover:bg-white/20 w-12 h-12 rounded-full disabled:opacity-50"
+              >
+                <X className="h-8 w-8" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <EditExpenseDialog
-        expense={editingExpense}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        expense={editingExpense}
         onSave={handleSaveEdit}
+      />
+      <ReviewExpenseDialog
+        isMobile={isMobile}
+        isProcessing={isProcessing}
+        isSaving={isSaving}
+        extractedData={extractedData}
+        setExtractedData={setExtractedData}
+        handleSave={onSaveSuccess}
+        originalData={originalData}
+      />
+      <ReceiptReviewDialog
+        open={isReviewDialogOpen}
+        onOpenChange={setIsReviewDialogOpen}
+        receipts={extractedReceipts}
+        onSaveComplete={handleReviewSaveComplete}
       />
     </>
   );

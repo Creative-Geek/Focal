@@ -153,3 +153,7 @@ nul
 pnpm-workspace.yaml
 docs/GROQ_PROVIDER.md
 docs/GROQ_IMPLEMENTATION.md
+
+# Python experiments
+docs/Python Experiement/
+

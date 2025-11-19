@@ -46,6 +46,7 @@ export function createRouter() {
 
     // ============ RECEIPT PROCESSING ROUTES (Protected) ============
     app.post('/receipts/process', authMiddleware, receiptsHandler.processReceipt);
+    app.post('/receipts/process-audio', authMiddleware, receiptsHandler.processAudioReceipt);
     app.get('/receipts/quota', authMiddleware, receiptsHandler.getAIQuota);
 
     // ============ SETTINGS ROUTES (Protected) ============

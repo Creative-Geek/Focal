@@ -40,14 +40,17 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { Toaster, toast } from "sonner";
-import { expenseService, ExpenseData } from "@/lib/expense-service";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
+import { useExpenseCreation } from "@/hooks/useExpenseCreation";
+import { ReviewExpenseDialog } from "@/components/ReviewExpenseDialog";
+import { AudioRecorder } from "@/components/AudioRecorder";
+import { ReceiptReviewDialog } from "@/components/ReceiptReviewDialog";
+import { ExpenseData } from "@/lib/expense-service";
+import { Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ExpenseForm } from "@/components/ExpenseForm";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
-import { resizeImage } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const videoConstraints = {
   width: 1280,
   height: 720,
@@ -55,249 +58,52 @@ const videoConstraints = {
 };
 
 // Hoisted to keep identity stable and avoid remount/focus loss
-function ReviewForm(props: {
-  isMobile: boolean;
-  isProcessing: boolean;
-  isSaving: boolean;
-  extractedData: ExpenseData | null;
-  setExtractedData: (data: ExpenseData | null) => void;
-  handleSave: () => void;
-  originalData: ExpenseData | null;
-}) {
-  const {
-    isMobile,
-    isProcessing,
-    isSaving,
-    extractedData,
-    setExtractedData,
-    handleSave,
-    originalData,
-  } = props;
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
 
-  useEffect(() => {
-    if (originalData && extractedData) {
-      // Check if this is new scanned data (has meaningful content)
-      const hasScannedContent =
-        originalData.lineItems.length > 0 &&
-        originalData.lineItems.some((item) => item.description.trim() !== "");
-
-      if (hasScannedContent) {
-        // This is new scanned data, mark as dirty immediately since it represents new information to save
-        setIsDirty(true);
-      } else {
-        // This is manual entry, only mark as dirty if data has actually changed
-        setIsDirty(
-          JSON.stringify(originalData) !== JSON.stringify(extractedData)
-        );
-      }
-    } else {
-      setIsDirty(false);
-    }
-  }, [extractedData, originalData]);
-
-  const handleCloseAttempt = () => {
-    if (isDirty && !isSaving && !isProcessing) {
-      setIsConfirmationOpen(true);
-    } else if (!isSaving) {
-      // If processing, also reset isProcessing state when closing
-      if (isProcessing) {
-        // Note: This won't cancel the API request, but will reset the UI
-        console.log("User canceled during processing");
-      }
-      setExtractedData(null);
-    }
-  };
-
-  const handleConfirmClose = () => {
-    setExtractedData(null);
-    setIsConfirmationOpen(false);
-    setIsDirty(false);
-  };
-
-  const Wrapper = isMobile ? Drawer : Dialog;
-  const Content = isMobile ? DrawerContent : DialogContent;
-  const Header = isMobile ? DrawerHeader : DialogHeader;
-  const Title = isMobile ? DrawerTitle : DialogTitle;
-  const Description = isMobile ? DrawerDescription : DialogDescription;
-  const Footer = isMobile ? DrawerFooter : DialogFooter;
-
-  return (
-    <>
-      <Wrapper
-        open={isProcessing || !!extractedData}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseAttempt();
-          }
-        }}
-      >
-        <Content
-          className={isMobile ? "max-h-[85vh]" : "max-w-2xl"}
-          onPointerDownOutside={(e) => {
-            if (isSaving) e.preventDefault();
-            if (isDirty) {
-              e.preventDefault();
-              handleCloseAttempt();
-            }
-          }}
-          onInteractOutside={(e) => {
-            if (isSaving) e.preventDefault();
-          }}
-          // The escape key is handled by onOpenChange
-        >
-          <Header className={isMobile ? "pb-2" : ""}>
-            <Title className="text-lg sm:text-xl">
-              {isProcessing ? "Analyzing Receipt..." : "Review Expense"}
-            </Title>
-            <Description className="text-sm">
-              {isProcessing
-                ? "Please wait while we extract the details from your receipt."
-                : "Review and edit the extracted details before saving."}
-            </Description>
-          </Header>
-          {isProcessing ? (
-            <div className="flex flex-col items-center justify-center h-48 sm:h-64 space-y-4 px-4">
-              <Loader className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-focal-blue-500" />
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Our AI is hard at work...
-              </p>
-            </div>
-          ) : (
-            extractedData && (
-              <div className="px-3 sm:px-4 overflow-y-auto">
-                <ExpenseForm
-                  value={extractedData}
-                  onChange={setExtractedData}
-                />
-              </div>
-            )
-          )}
-          <Footer className={isMobile ? "pt-2 gap-2" : ""}>
-            <Button
-              variant="outline"
-              disabled={isSaving}
-              onClick={handleCloseAttempt}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isProcessing || isSaving || !isDirty}
-            >
-              {isSaving ? (
-                <Loader className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Expense
-            </Button>
-          </Footer>
-        </Content>
-      </Wrapper>
-      <AlertDialog
-        open={isConfirmationOpen}
-        onOpenChange={setIsConfirmationOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to discard your changes? This action cannot
-              be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmClose}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Discard Changes
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  );
-}
 
 export const HomePage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [extractedData, setExtractedData] = useState<ExpenseData | null>(null);
-  const [originalData, setOriginalData] = useState<ExpenseData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [defaultCurrency, setDefaultCurrency] = useState("USD");
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+  const [audioReceipts, setAudioReceipts] = useState<ExpenseData[]>([]);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
-  const fetchUserCurrency = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/settings/currency", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data?.defaultCurrency) {
-          setDefaultCurrency(data.data.defaultCurrency);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch default currency:", error);
+  const {
+    isProcessing,
+    isSaving,
+    extractedData,
+    setExtractedData,
+    originalData,
+    error,
+    setError,
+    handleImageProcessing,
+    handleAudioProcessing,
+    handleManualEntry,
+    handleSave,
+  } = useExpenseCreation();
+
+  const onSaveSuccess = async () => {
+    const success = await handleSave();
+    if (success) {
+      navigate("/expenses");
     }
   };
 
-  useEffect(() => {
-    fetchUserCurrency();
-  }, []);
-
-  const handleImageProcessing = async (base64Image: string) => {
-    // Reset all states before starting
-    setIsProcessing(true);
-    setError(null);
-    setExtractedData(null);
-    setOriginalData(null);
-
-    try {
-      // Resize image to max 1200x1200 before sending to API
-      const resizedImage = await resizeImage(base64Image, 1200);
-
-      const response = await expenseService.processReceipt(resizedImage);
-      if (response.success && response.data) {
-        const data = {
-          ...response.data,
-          lineItems: response.data.lineItems || [],
-        };
-        setExtractedData(data);
-        setOriginalData(data);
-      } else {
-        setError(response.error || "Failed to extract data from receipt.");
-        toast.error("Processing Failed", { description: response.error });
-      }
-    } catch (e) {
-      const errorMessage =
-        e instanceof Error
-          ? e.message
-          : "An unexpected error occurred during processing.";
-      setError(errorMessage);
-      toast.error("Processing Error", {
-        description: "Could not connect to the server.",
-      });
-      console.error("Receipt processing error:", e);
-    } finally {
-      setIsProcessing(false);
+  const handleAudioComplete = async (blob: Blob) => {
+    const results = await handleAudioProcessing(blob);
+    if (results && results.length > 0) {
+      setAudioReceipts(results);
+      setIsReviewDialogOpen(true);
+      setShowAudioRecorder(false);
     }
+  };
+
+  const handleReviewSaveComplete = () => {
+    navigate("/expenses");
   };
   const capture = useCallback(async () => {
     if (webcamRef.current && !isProcessing) {
@@ -329,46 +135,6 @@ export const HomePage: React.FC = () => {
     event.target.value = "";
   };
 
-  const handleManualEntry = () => {
-    const today = new Date().toISOString().split("T")[0];
-    const newData = {
-      merchant: "",
-      date: today,
-      total: 0,
-      currency: defaultCurrency,
-      category: "Other",
-      lineItems: [{ description: "", quantity: 1, price: 0 }],
-    };
-    setExtractedData(newData);
-    setOriginalData(newData);
-  };
-  const handleSave = async () => {
-    if (extractedData && !isSaving) {
-      setIsSaving(true);
-      try {
-        const response = await expenseService.saveExpense(extractedData);
-        if (response.success) {
-          toast.success("Expense Saved!", {
-            description: `${extractedData.merchant} for ${extractedData.total} has been added.`,
-          });
-          // Clear state first, then navigate
-          setExtractedData(null);
-          setIsSaving(false);
-          // Navigate after state is cleared
-          navigate("/expenses");
-        } else {
-          toast.error("Save Failed", { description: response.error });
-          setIsSaving(false);
-        }
-      } catch (e) {
-        toast.error("Save Error", {
-          description: "Could not connect to the server.",
-        });
-        setIsSaving(false);
-      }
-    }
-  };
-
   return (
     <>
       <Toaster richColors position="top-center" />
@@ -396,63 +162,90 @@ export const HomePage: React.FC = () => {
             Instantly capture, analyze, and organize your expenses with a single
             photo. The fastest way to track your spending.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
-            <Button
-              size="lg"
-              onClick={() => {
-                if (!isProcessing && !isSaving) {
-                  setError(null); // Clear any previous errors
-                  setIsCameraOpen(true);
-                }
-              }}
-              disabled={isProcessing || isSaving}
-              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
-                  Processing...
-                </>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
+              <Button
+                size="lg"
+                onClick={() => {
+                  if (!isProcessing && !isSaving) {
+                    setError(null);
+                    setIsCameraOpen(true);
+                  }
+                }}
+                disabled={isProcessing || isSaving}
+                className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+              >
+                {isProcessing ? (
+                  <Loader className="h-8 w-8 animate-spin" />
+                ) : (
+                  <Camera className="h-8 w-8" />
+                )}
+                <span>Scan Receipt</span>
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  if (!isProcessing && !isSaving) {
+                    setError(null);
+                    fileInputRef.current?.click();
+                  }
+                }}
+                disabled={isProcessing || isSaving}
+                className="h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+              >
+                <Upload className="h-8 w-8" />
+                <span>Upload Photo</span>
+              </Button>
+
+              {showAudioRecorder ? (
+                <div className="col-span-1 sm:col-span-2 bg-card border rounded-xl p-4 shadow-lg flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
+                  <span className="text-sm font-medium">Record or Upload Voice Note</span>
+                  <AudioRecorder
+                    onRecordingComplete={handleAudioComplete}
+                    isProcessing={isProcessing}
+                  />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowAudioRecorder(false)}
+                    className="mt-2 text-xs text-muted-foreground"
+                  >
+                    Cancel
+                  </Button>
+                </div>
               ) : (
-                <>
-                  <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                  Scan Receipt
-                </>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowAudioRecorder(true)}
+                  disabled={isProcessing || isSaving}
+                  className="col-span-1 sm:col-span-2 h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+                >
+                  <Mic className="h-8 w-8" />
+                  <span>Voice Expense</span>
+                </Button>
               )}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                if (!isProcessing && !isSaving) {
-                  setError(null); // Clear any previous errors
-                  fileInputRef.current?.click();
-                }
-              }}
-              disabled={isProcessing || isSaving}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              <Upload className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-              Upload Photo
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleManualEntry}
-              disabled={isProcessing || isSaving}
-              className="px-6 sm:px-10 py-4 sm:py-6 text-base sm:text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              <PenLine className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-              Manual Entry
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </div>
+
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={handleManualEntry}
+                disabled={isProcessing || isSaving}
+                className="col-span-1 sm:col-span-2 h-auto py-4 text-base font-medium text-muted-foreground hover:text-foreground"
+              >
+                <PenLine className="mr-2 h-4 w-4" />
+                Or enter manually
+              </Button>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
         </motion.div>
         {error && (
           <motion.div
@@ -516,14 +309,20 @@ export const HomePage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <ReviewForm
+      <ReviewExpenseDialog
         isMobile={isMobile}
         isProcessing={isProcessing}
         isSaving={isSaving}
         extractedData={extractedData}
         setExtractedData={setExtractedData}
-        handleSave={handleSave}
+        handleSave={onSaveSuccess}
         originalData={originalData}
+      />
+      <ReceiptReviewDialog
+        open={isReviewDialogOpen}
+        onOpenChange={setIsReviewDialogOpen}
+        receipts={audioReceipts}
+        onSaveComplete={handleReviewSaveComplete}
       />
     </>
   );
