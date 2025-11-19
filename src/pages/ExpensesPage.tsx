@@ -895,6 +895,48 @@ export const ExpensesPage: React.FC = () => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </CardFooter>
+                <AnimatePresence initial={false}>
+                  {expanded[expense.id] && (
+                    <motion.div
+                      key={`mobile-details-${expense.id}`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div className="px-4 pb-4">
+                        {expense.lineItems && expense.lineItems.length > 0 ? (
+                          <div className="space-y-2">
+                            {expense.lineItems.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between rounded-md border p-2"
+                              >
+                                <div className="pr-2 text-sm">
+                                  {item.description}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  x{item.quantity}
+                                </div>
+                                <div className="ml-auto text-sm">
+                                  {formatCurrency(
+                                    item.quantity * item.price,
+                                    expense.currency
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            No items
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Card>
             ))}
           </div>
