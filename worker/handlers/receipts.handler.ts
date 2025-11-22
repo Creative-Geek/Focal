@@ -137,6 +137,7 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
     try {
         const body = await c.req.parseBody();
         const audioFile = body['audio'] as File;
+        const userLocalDate = body['userLocalDate'] as string | undefined;
 
         if (!audioFile) {
             return error('No audio file provided', 400);
@@ -149,12 +150,25 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
         // Get Gemini API key
         const apiKey = AIProviderFactory.getApiKey(env, 'gemini');
 
-        // Process audio
+        // Get user's default currency
+        const apiKeyRecord = await dbService.getApiKey(userId);
+        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
+
+        // Process audio with user's local date and currency context
         const audioService = new AudioService();
         const arrayBuffer = await audioFile.arrayBuffer();
 
         console.log('[Receipt Handler] Processing audio receipt...');
-        const result = await audioService.processAudio(apiKey, arrayBuffer, audioFile.type);
+        console.log('[Receipt Handler] User local date:', userLocalDate || 'not provided');
+        console.log('[Receipt Handler] User currency:', defaultCurrency);
+        
+        const result = await audioService.processAudio(
+            apiKey,
+            arrayBuffer,
+            audioFile.type,
+            userLocalDate,
+            defaultCurrency
+        );
 
         if (!result.success) {
             return error(result.error || 'Failed to process audio', 500);
@@ -162,10 +176,6 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
 
         // Record the AI usage (only after successful processing)
         await rateLimitService.recordRequest(userId);
-
-        // Get user's default currency
-        const apiKeyRecord = await dbService.getApiKey(userId);
-        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
 
         // Add default currency to each receipt
         const receipts = result.data.map((receipt: any) => ({
