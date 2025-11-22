@@ -6,12 +6,23 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 export class AudioService {
     /**
      * Process an audio file and extract receipt data
+     * @param apiKey - Gemini API key
+     * @param audioData - Audio file as ArrayBuffer
+     * @param mimeType - MIME type of the audio file
+     * @param userLocalDate - User's local date in YYYY-MM-DD format (optional, defaults to server date)
+     * @param userCurrency - User's default currency (optional, for context in AI prompt)
      */
-    async processAudio(apiKey: string, audioData: ArrayBuffer, mimeType: string): Promise<any> {
+    async processAudio(
+        apiKey: string,
+        audioData: ArrayBuffer,
+        mimeType: string,
+        userLocalDate?: string,
+        userCurrency?: string
+    ): Promise<any> {
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // Get current date in YYYY-MM-DD format for the prompt
-        const currentDate = new Date().toISOString().split('T')[0];
+        // Use user's local date if provided, otherwise fall back to server date
+        const currentDate = userLocalDate || new Date().toISOString().split('T')[0];
 
         const model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash',
@@ -81,19 +92,33 @@ export class AudioService {
             },
         });
 
+        // Add currency context to the system instruction if provided
+        const currencyContext = userCurrency 
+            ? `\n- The user's default currency is ${userCurrency}. If the currency is not explicitly mentioned in the audio, you can assume amounts are in ${userCurrency}.`
+            : '';
+
         const systemInstruction = `You are an expert receipt extraction assistant. Your task is to analyze audio recordings where users describe their purchases or read out receipt details.
 
 From the audio, you must extract ALL receipts mentioned and structure each one according to the provided schema.
 
+IMPORTANT DATE CONTEXT:
+- Today's date is ${currentDate}
+- When the user mentions relative dates, calculate them based on TODAY being ${currentDate}:
+  * "today" or "اليوم" (al-yawm) = ${currentDate}
+  * "yesterday" or "امبارح" or "أمس" (ams) = subtract 1 day from ${currentDate}
+  * "last Monday", "last week", etc. = calculate backwards from ${currentDate}
+  * "this morning", "earlier today" = use ${currentDate}
+- If the date is unclear or not mentioned at all, use ${currentDate}
+
 Key guidelines:
 - Listen carefully for merchant names, dates, items purchased, quantities, and prices
 - If multiple receipts are mentioned in the audio, extract each one separately
-- Infer the transaction date from context clues (e.g., "yesterday", "last Monday", "this morning"). If date is unclear, use ${currentDate}.
+- Pay special attention to date mentions in both English and Arabic (امبارح, أمس, اليوم)
 - Assign appropriate categories based on merchant type and items mentioned (Food & Drink, Groceries, Travel, Shopping, Utilities, Other)
 - If prices aren't explicitly stated, use your best judgment based on typical market prices
 - If quantity isn't mentioned, assume 1
 - Be thorough and extract every receipt mentioned in the audio
-- Provide the final output in the same language as the audio
+- Provide the final output in the same language as the audio${currencyContext}
 
 Return a list of all receipts found in the audio.`;
 
