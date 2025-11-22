@@ -93,7 +93,7 @@ export class AudioService {
         });
 
         // Add currency context to the system instruction if provided
-        const currencyContext = userCurrency 
+        const currencyContext = userCurrency
             ? `\n- The user's default currency is ${userCurrency}. If the currency is not explicitly mentioned in the audio, you can assume amounts are in ${userCurrency}.`
             : '';
 
@@ -118,8 +118,8 @@ Key guidelines:
 - If prices aren't explicitly stated, use your best judgment based on typical market prices
 - If quantity isn't mentioned, assume 1
 - Be thorough and extract every receipt mentioned in the audio
-- Provide the final output in the same language as the audio${currencyContext}
-
+- Provide the final output in the same language as the audio
+${currencyContext}
 Return a list of all receipts found in the audio.`;
 
         try {
