@@ -33,7 +33,10 @@ export class BrevoService {
     ): Promise<{ success: boolean; messageId?: string; error?: string }> {
         try {
             const verificationUrl = `${appUrl}/verify?token=${verificationToken}`;
-            const logoUrl = `${appUrl}/images/logo.svg`;
+            // Ensure logo URL is public even when testing locally
+            const logoUrl = appUrl.includes('localhost')
+                ? 'https://focal.creative-geek.tech/images/logo.svg'
+                : `${appUrl}/images/logo.svg`;
 
             const emailData = {
                 sender: {
@@ -251,7 +254,10 @@ The Focal Team
     ): Promise<{ success: boolean; messageId?: string; error?: string }> {
         try {
             const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
-            const logoUrl = `${appUrl}/images/logo.svg`;
+            // Ensure logo URL is public even when testing locally
+            const logoUrl = appUrl.includes('localhost')
+                ? 'https://focal.creative-geek.tech/images/logo.svg'
+                : `${appUrl}/images/logo.svg`;
 
             const emailData = {
                 sender: {
