@@ -11,6 +11,39 @@ export interface LineItem {
   price: number;
 }
 
+// ============ ADMIN TYPES ============
+export interface AdminStats {
+  totalUsers: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  activeUsers7Days: number;
+  totalExpenses: number;
+  expensesToday: number;
+  expensesThisWeek: number;
+  expensesThisMonth: number;
+  categoryBreakdown: { category: string; count: number }[];
+  aiProviderBreakdown: { provider: string; count: number }[];
+  currencyBreakdown: { currency: string; count: number }[];
+}
+
+export interface UserWithStats {
+  id: string;
+  email: string;
+  created_at: number;
+  email_verified: number;
+  expenseCount: number;
+  lastExpenseAt: number | null;
+  settings: {
+    currency: string;
+    aiProvider: string;
+  } | null;
+}
+
+export interface UserExpense extends Expense {
+  lineItems: LineItem[];
+}
+
 // Helper to get auth headers
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('auth_token');
@@ -197,6 +230,108 @@ class ExpenseService {
     } catch (error: any) {
       console.error('Failed to update expense:', error);
       return { success: false, error: error.message || 'Failed to update expense.' };
+    }
+  }
+
+  // ============ ADMIN METHODS ============
+
+  /**
+   * Check if current user is an admin
+   */
+  async checkAdmin(): Promise<{ success: boolean; isAdmin: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/check`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        return { success: true, isAdmin: false };
+      }
+
+      const result = await response.json();
+      return { success: true, isAdmin: result.data?.isAdmin === true };
+    } catch (error: any) {
+      console.error('Admin check error:', error);
+      return { success: false, isAdmin: false };
+    }
+  }
+
+  /**
+   * Get admin dashboard statistics
+   */
+  async getAdminStats(): Promise<{ success: boolean; data?: AdminStats; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/stats`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, error: 'Not authorized' };
+        }
+        const result = await response.json();
+        return { success: false, error: result.error || 'Failed to fetch stats' };
+      }
+
+      const result = await response.json();
+      return { success: true, data: result.data };
+    } catch (error: any) {
+      console.error('Failed to get admin stats:', error);
+      return { success: false, error: error.message || 'Failed to fetch stats.' };
+    }
+  }
+
+  /**
+   * Get all users with their stats (admin only)
+   */
+  async getAdminUsers(): Promise<{ success: boolean; data?: UserWithStats[]; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, error: 'Not authorized' };
+        }
+        const result = await response.json();
+        return { success: false, error: result.error || 'Failed to fetch users' };
+      }
+
+      const result = await response.json();
+      return { success: true, data: result.data };
+    } catch (error: any) {
+      console.error('Failed to get admin users:', error);
+      return { success: false, error: error.message || 'Failed to fetch users.' };
+    }
+  }
+
+  /**
+   * Get expenses for a specific user by email (admin only)
+   */
+  async getAdminUserExpenses(email: string): Promise<{ success: boolean; data?: UserExpense[]; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/user/${encodeURIComponent(email)}/expenses`, {
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, error: 'Not authorized or user not found' };
+        }
+        const result = await response.json();
+        return { success: false, error: result.error || 'Failed to fetch user expenses' };
+      }
+
+      const result = await response.json();
+      return { success: true, data: result.data };
+    } catch (error: any) {
+      console.error('Failed to get admin user expenses:', error);
+      return { success: false, error: error.message || 'Failed to fetch user expenses.' };
     }
   }
 

@@ -3,6 +3,7 @@ import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import { HomePage } from "@/pages/HomePage";
 import { ExpensesPage } from "@/pages/ExpensesPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { AdminPage } from "@/pages/AdminPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { LandingPage } from "@/pages/LandingPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
           {
             path: "/settings",
             element: <SettingsPage />,
+          },
+          {
+            path: "/admin",
+            element: <AdminPage />,
           },
         ],
       },

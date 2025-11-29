@@ -7,12 +7,19 @@ import * as expensesHandler from './handlers/expenses.handler';
 import * as apiKeysHandler from './handlers/apiKeys.handler';
 import * as receiptsHandler from './handlers/receipts.handler';
 import * as errorsHandler from './handlers/errors.handler';
+import * as adminHandler from './handlers/admin.handler';
+
+type Variables = {
+    userId: string;
+    userEmail: string;
+    token: string;
+};
 
 /**
  * API Router for Focal Finance Tracker
  */
 export function createRouter() {
-    const app = new Hono<{ Bindings: Env }>();
+    const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
     // ============ AUTHENTICATION ROUTES ============
     app.post('/auth/signup', authHandler.signup);
@@ -57,6 +64,13 @@ export function createRouter() {
 
     // ============ ERROR LOGGING ROUTES ============
     app.post('/client-errors', errorsHandler.logClientError);
+
+    // ============ ADMIN ROUTES (Protected + Admin Check) ============
+    // Note: Admin check happens inside each handler (returns 404 for non-admins)
+    app.get('/admin/check', authMiddleware, adminHandler.checkAdmin);
+    app.get('/admin/stats', authMiddleware, adminHandler.getStats);
+    app.get('/admin/users', authMiddleware, adminHandler.getUsers);
+    app.get('/admin/user/:email/expenses', authMiddleware, adminHandler.getUserExpenses);
 
     return app;
 }

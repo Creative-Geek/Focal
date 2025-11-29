@@ -1,5 +1,39 @@
 import { Env, User, Expense, LineItem, ApiKey, Session } from '../types';
 
+// ============ ADMIN ANALYTICS TYPES ============
+
+export interface AdminStats {
+    totalUsers: number;
+    newUsersToday: number;
+    newUsersThisWeek: number;
+    newUsersThisMonth: number;
+    activeUsers7Days: number;
+    totalExpenses: number;
+    expensesToday: number;
+    expensesThisWeek: number;
+    expensesThisMonth: number;
+    categoryBreakdown: { category: string; count: number }[];
+    aiProviderBreakdown: { provider: string; count: number }[];
+    currencyBreakdown: { currency: string; count: number }[];
+}
+
+export interface UserWithStats {
+    id: string;
+    email: string;
+    created_at: number;
+    email_verified: number;
+    expenseCount: number;
+    lastExpenseAt: number | null;
+    settings: {
+        currency: string;
+        aiProvider: string;
+    } | null;
+}
+
+export interface UserExpense extends Expense {
+    lineItems: LineItem[];
+}
+
 /**
  * Database service for D1 operations
  */
@@ -382,5 +416,188 @@ export class DBService {
             .all<{ created_at: number }>();
 
         return result.results || [];
+    }
+
+    // ============ ADMIN ANALYTICS OPERATIONS ============
+
+    /**
+     * Get comprehensive admin statistics
+     */
+    async getAdminStats(): Promise<AdminStats> {
+        const now = Date.now();
+        const oneDayAgo = now - 24 * 60 * 60 * 1000;
+        const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+        const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+        // Total users
+        const totalUsersResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM users')
+            .first<{ count: number }>();
+        const totalUsers = totalUsersResult?.count || 0;
+
+        // New users today
+        const newUsersTodayResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM users WHERE created_at > ?')
+            .bind(oneDayAgo)
+            .first<{ count: number }>();
+        const newUsersToday = newUsersTodayResult?.count || 0;
+
+        // New users this week
+        const newUsersWeekResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM users WHERE created_at > ?')
+            .bind(oneWeekAgo)
+            .first<{ count: number }>();
+        const newUsersThisWeek = newUsersWeekResult?.count || 0;
+
+        // New users this month
+        const newUsersMonthResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM users WHERE created_at > ?')
+            .bind(oneMonthAgo)
+            .first<{ count: number }>();
+        const newUsersThisMonth = newUsersMonthResult?.count || 0;
+
+        // Active users (created at least one expense in last 7 days)
+        const activeUsersResult = await this.db
+            .prepare('SELECT COUNT(DISTINCT user_id) as count FROM expenses WHERE created_at > ?')
+            .bind(oneWeekAgo)
+            .first<{ count: number }>();
+        const activeUsers7Days = activeUsersResult?.count || 0;
+
+        // Total expenses
+        const totalExpensesResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM expenses')
+            .first<{ count: number }>();
+        const totalExpenses = totalExpensesResult?.count || 0;
+
+        // Expenses today
+        const expensesTodayResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM expenses WHERE created_at > ?')
+            .bind(oneDayAgo)
+            .first<{ count: number }>();
+        const expensesToday = expensesTodayResult?.count || 0;
+
+        // Expenses this week
+        const expensesWeekResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM expenses WHERE created_at > ?')
+            .bind(oneWeekAgo)
+            .first<{ count: number }>();
+        const expensesThisWeek = expensesWeekResult?.count || 0;
+
+        // Expenses this month
+        const expensesMonthResult = await this.db
+            .prepare('SELECT COUNT(*) as count FROM expenses WHERE created_at > ?')
+            .bind(oneMonthAgo)
+            .first<{ count: number }>();
+        const expensesThisMonth = expensesMonthResult?.count || 0;
+
+        // Category breakdown
+        const categoryResult = await this.db
+            .prepare('SELECT category, COUNT(*) as count FROM expenses GROUP BY category ORDER BY count DESC')
+            .all<{ category: string; count: number }>();
+        const categoryBreakdown = categoryResult.results || [];
+
+        // AI provider breakdown (from user settings)
+        const providerResult = await this.db
+            .prepare('SELECT COALESCE(ai_provider, \'gemini\') as provider, COUNT(*) as count FROM api_keys GROUP BY ai_provider ORDER BY count DESC')
+            .all<{ provider: string; count: number }>();
+        const aiProviderBreakdown = providerResult.results || [];
+
+        // Currency breakdown (from user settings)
+        const currencyResult = await this.db
+            .prepare('SELECT default_currency as currency, COUNT(*) as count FROM api_keys GROUP BY default_currency ORDER BY count DESC')
+            .all<{ currency: string; count: number }>();
+        const currencyBreakdown = currencyResult.results || [];
+
+        return {
+            totalUsers,
+            newUsersToday,
+            newUsersThisWeek,
+            newUsersThisMonth,
+            activeUsers7Days,
+            totalExpenses,
+            expensesToday,
+            expensesThisWeek,
+            expensesThisMonth,
+            categoryBreakdown,
+            aiProviderBreakdown,
+            currencyBreakdown,
+        };
+    }
+
+    /**
+     * Get all users with their stats for admin view
+     */
+    async getAllUsersWithStats(): Promise<UserWithStats[]> {
+        // Get all users with their expense count and last expense date
+        const usersResult = await this.db
+            .prepare(`
+                SELECT 
+                    u.id,
+                    u.email,
+                    u.created_at,
+                    COALESCE(u.email_verified, 0) as email_verified,
+                    COUNT(e.id) as expenseCount,
+                    MAX(e.created_at) as lastExpenseAt
+                FROM users u
+                LEFT JOIN expenses e ON u.id = e.user_id
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+            `)
+            .all<{
+                id: string;
+                email: string;
+                created_at: number;
+                email_verified: number;
+                expenseCount: number;
+                lastExpenseAt: number | null;
+            }>();
+
+        const users = usersResult.results || [];
+
+        // Get settings for each user
+        const usersWithSettings: UserWithStats[] = [];
+        for (const user of users) {
+            const settings = await this.getUserSettings(user.id);
+            usersWithSettings.push({
+                ...user,
+                settings: settings ? {
+                    currency: settings.default_currency,
+                    aiProvider: settings.ai_provider || 'gemini',
+                } : null,
+            });
+        }
+
+        return usersWithSettings;
+    }
+
+    /**
+     * Get expenses for a specific user by email (admin only)
+     */
+    async getExpensesByUserEmail(email: string): Promise<UserExpense[]> {
+        // First get the user
+        const user = await this.getUserByEmail(email);
+        if (!user) {
+            return [];
+        }
+
+        // Get all expenses for this user
+        const expensesResult = await this.db
+            .prepare('SELECT * FROM expenses WHERE user_id = ? ORDER BY created_at DESC LIMIT 100')
+            .bind(user.id)
+            .all<Expense>();
+
+        const expenses = expensesResult.results || [];
+
+        // Get line items for each expense
+        const expensesWithLineItems: UserExpense[] = [];
+        for (const expense of expenses) {
+            const lineItems = await this.getLineItemsByExpenseId(expense.id);
+            expensesWithLineItems.push({
+                ...expense,
+                lineItems,
+            });
+        }
+
+        return expensesWithLineItems;
     }
 }

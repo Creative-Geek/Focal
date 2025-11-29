@@ -8,6 +8,7 @@ export interface Env {
     NODE_ENV: string;
     BREVO_API_KEY?: string; // Optional: Brevo API key for sending transactional emails
     APP_URL?: string; // Optional: Application URL for email links (defaults to localhost in dev)
+    ADMIN_EMAIL?: string; // Optional: Email address with admin access
 
     // AI Provider Configuration
     AI_PROVIDER?: string; // AI provider to use: 'gemini' | 'openai' | 'nvidia' | 'groq' (defaults to 'gemini')

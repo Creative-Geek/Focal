@@ -25,6 +25,7 @@ AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
 # ENCRYPTION_KEY - Key for encrypting sensitive data in database
 # BREVO_API_KEY - (Optional) Brevo API key for sending transactional emails
 # APP_URL - (Optional) Application URL for email verification links (e.g., https://focal-expense.app)
+# ADMIN_EMAIL - (Optional) Email address for admin access (e.g., admin@example.com)
 #
 # AI Provider Secrets (configure the one matching your AI_PROVIDER):
 # GEMINI_API_KEY - Google Gemini API key (for AI_PROVIDER=gemini)
