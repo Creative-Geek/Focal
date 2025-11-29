@@ -166,6 +166,7 @@ export async function login(c: Context<{ Bindings: Env }>) {
             user: {
                 id: user.id,
                 email: user.email,
+                emailVerified: user.email_verified === 1,
             },
             token,
         })
