@@ -95,6 +95,10 @@ class ExpenseService {
     try {
       const formData = new FormData();
       formData.append('audio', audioBlob);
+      
+      // Add user's local date in YYYY-MM-DD format
+      const userLocalDate = new Date().toISOString().split('T')[0];
+      formData.append('userLocalDate', userLocalDate);
 
       const response = await fetch(`${API_BASE_URL}/receipts/process-audio`, {
         method: 'POST',
