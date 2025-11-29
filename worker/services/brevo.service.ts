@@ -33,6 +33,7 @@ export class BrevoService {
     ): Promise<{ success: boolean; messageId?: string; error?: string }> {
         try {
             const verificationUrl = `${appUrl}/verify?token=${verificationToken}`;
+            const logoUrl = `${appUrl}/images/logo.svg`;
 
             const emailData = {
                 sender: {
@@ -45,7 +46,10 @@ export class BrevoService {
                         name: recipientName
                     }
                 ],
-                subject: 'Verify your Focal account',
+                subject: 'Action Required: Verify your Focal account',
+                headers: {
+                    'X-Mailin-Tag': 'verification'
+                },
                 htmlContent: `
 <!DOCTYPE html>
 <html>
@@ -63,6 +67,9 @@ export class BrevoService {
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    <div style="display:none;font-size:1px;color:#333333;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Please verify your email address to start tracking expenses with Focal.
+    </div>
     <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; min-height: 100vh;">
         <tr>
             <td align="center">
@@ -70,7 +77,7 @@ export class BrevoService {
                     <!-- Header with Logo -->
                     <tr>
                         <td style="padding: 50px 40px 30px; text-align: center; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPg0KICA8ZGVmcz4NCiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxMTE4MjciLz4NCiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFmMjkzNyIvPg0KICAgIDwvbGluZWFyR3JhZGllbnQ+DQogIDwvZGVmcz4NCiAgPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgcng9IjIwMCIgZmlsbD0idXJsKCNnKSIvPg0KICA8IS0tIEZvY2FsIGdseXBoOiBhIGZvY3VzIGJhciBtb3RpZiAtLT4NCiAgPHJlY3QgeD0iMTYwIiB5PSI0OTIiIHdpZHRoPSI3MDQiIGhlaWdodD0iNDAiIHJ4PSIyMCIgZmlsbD0iIzNiODJmNiIvPg0KICA8Y2lyY2xlIGN4PSI1MTIiIGN5PSI1MTIiIHI9IjE0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTNjNWZkIiBzdHJva2Utd2lkdGg9IjMyIi8+DQogIDxjaXJjbGUgY3g9IjUxMiIgY3k9IjUxMiIgcj0iMTYiIGZpbGw9IiMzYjgyZjYiLz4NCjwvc3ZnPg0K" alt="Focal Logo" class="logo" style="width: 80px; height: 80px; margin-bottom: 20px;" />
+                            <img src="${logoUrl}" alt="Focal Logo" class="logo" style="width: 80px; height: 80px; margin-bottom: 20px;" />
                             <h1 style="margin: 0; color: #1e293b; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                                 Welcome to Focal! 📸
                             </h1>
@@ -244,6 +251,7 @@ The Focal Team
     ): Promise<{ success: boolean; messageId?: string; error?: string }> {
         try {
             const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+            const logoUrl = `${appUrl}/images/logo.svg`;
 
             const emailData = {
                 sender: {
@@ -256,7 +264,10 @@ The Focal Team
                         name: recipientName
                     }
                 ],
-                subject: 'Reset your Focal password',
+                subject: 'Action Required: Reset your Focal password',
+                headers: {
+                    'X-Mailin-Tag': 'password-reset'
+                },
                 htmlContent: `
 <!DOCTYPE html>
 <html>
@@ -274,6 +285,9 @@ The Focal Team
     </style>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    <div style="display:none;font-size:1px;color:#333333;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        You requested a password reset. Click the link to create a new password.
+    </div>
     <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; min-height: 100vh;">
         <tr>
             <td align="center">
@@ -281,7 +295,7 @@ The Focal Team
                     <!-- Header with Logo -->
                     <tr>
                         <td style="padding: 50px 40px 30px; text-align: center; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPg0KICA8ZGVmcz4NCiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxMTE4MjciLz4NCiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFmMjkzNyIvPg0KICAgIDwvbGluZWFyR3JhZGllbnQ+DQogIDwvZGVmcz4NCiAgPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMTAyNCIgcng9IjIwMCIgZmlsbD0idXJsKCNnKSIvPg0KICA8IS0tIEZvY2FsIGdseXBoOiBhIGZvY3VzIGJhciBtb3RpZiAtLT4NCiAgPHJlY3QgeD0iMTYwIiB5PSI0OTIiIHdpZHRoPSI3MDQiIGhlaWdodD0iNDAiIHJ4PSIyMCIgZmlsbD0iIzNiODJmNiIvPg0KICA8Y2lyY2xlIGN4PSI1MTIiIGN5PSI1MTIiIHI9IjE0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTNjNWZkIiBzdHJva2Utd2lkdGg9IjMyIi8+DQogIDxjaXJjbGUgY3g9IjUxMiIgY3k9IjUxMiIgcj0iMTYiIGZpbGw9IiMzYjgyZjYiLz4NCjwvc3ZnPg0K" alt="Focal Logo" class="logo" style="width: 80px; height: 80px; margin-bottom: 20px;" />
+                            <img src="${logoUrl}" alt="Focal Logo" class="logo" style="width: 80px; height: 80px; margin-bottom: 20px;" />
                             <h1 style="margin: 0; color: #1e293b; font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                                 Reset Your Password
                             </h1>
