@@ -4,7 +4,7 @@ import { DBService } from '../services/db.service';
 import { RateLimitService } from '../services/rateLimit.service';
 import { AIProviderFactory, AIProviderType } from '../services/ai/factory';
 import { AudioService } from '../services/audio.service';
-import { validateRequest, processReceiptSchema } from '../utils/validation';
+import { validateRequest, processReceiptSchema, validateImageDimensions } from '../utils/validation';
 import { success, error, json } from '../utils/response';
 
 type Variables = {
@@ -35,6 +35,12 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
     }
 
     const { image } = validation.data;
+
+    // Validate image dimensions (max 2000px in any dimension)
+    const dimensionValidation = validateImageDimensions(image);
+    if (!dimensionValidation.valid) {
+        return error(dimensionValidation.error, 400);
+    }
 
     // Check AI usage rate limit
     const rateLimitService = new RateLimitService(dbService, 'ai_receipt_processing', AI_RATE_LIMIT);
@@ -161,7 +167,7 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
         console.log('[Receipt Handler] Processing audio receipt...');
         console.log('[Receipt Handler] User local date:', userLocalDate || 'not provided');
         console.log('[Receipt Handler] User currency:', defaultCurrency);
-        
+
         const result = await audioService.processAudio(
             apiKey,
             arrayBuffer,
