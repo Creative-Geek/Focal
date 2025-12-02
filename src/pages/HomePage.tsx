@@ -50,6 +50,7 @@ import { Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
+import { CurrencyBanner } from "@/components/CurrencyBanner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const videoConstraints = {
   width: 1280,
@@ -59,13 +60,12 @@ const videoConstraints = {
 
 // Hoisted to keep identity stable and avoid remount/focus loss
 
-
 export const HomePage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [audioReceipts, setAudioReceipts] = useState<ExpenseData[]>([]);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  
+
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -162,90 +162,98 @@ export const HomePage: React.FC = () => {
             Instantly capture, analyze, and organize your expenses with a single
             photo. The fastest way to track your spending.
           </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
-              <Button
-                size="lg"
-                onClick={() => {
-                  if (!isProcessing && !isSaving) {
-                    setError(null);
-                    setIsCameraOpen(true);
-                  }
-                }}
-                disabled={isProcessing || isSaving}
-                className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
-              >
-                {isProcessing ? (
-                  <Loader className="h-8 w-8 animate-spin" />
-                ) : (
-                  <Camera className="h-8 w-8" />
-                )}
-                <span>Scan Receipt</span>
-              </Button>
 
+          {/* Currency Banner */}
+          <div className="w-full max-w-2xl mx-auto px-2 sm:px-4">
+            <CurrencyBanner />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-2xl mx-auto px-2 sm:px-4">
+            <Button
+              size="lg"
+              onClick={() => {
+                if (!isProcessing && !isSaving) {
+                  setError(null);
+                  setIsCameraOpen(true);
+                }
+              }}
+              disabled={isProcessing || isSaving}
+              className="bg-focal-blue-500 hover:bg-focal-blue-600 text-white h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+            >
+              {isProcessing ? (
+                <Loader className="h-8 w-8 animate-spin" />
+              ) : (
+                <Camera className="h-8 w-8" />
+              )}
+              <span>Scan Receipt</span>
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                if (!isProcessing && !isSaving) {
+                  setError(null);
+                  fileInputRef.current?.click();
+                }
+              }}
+              disabled={isProcessing || isSaving}
+              className="h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+            >
+              <Upload className="h-8 w-8" />
+              <span>Upload Photo</span>
+            </Button>
+
+            {showAudioRecorder ? (
+              <div className="col-span-1 sm:col-span-2 bg-card border rounded-xl p-4 shadow-lg flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
+                <span className="text-sm font-medium">
+                  Record or Upload Voice Note
+                </span>
+                <AudioRecorder
+                  onRecordingComplete={handleAudioComplete}
+                  isProcessing={isProcessing}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAudioRecorder(false)}
+                  className="mt-2 text-xs text-muted-foreground"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => {
-                  if (!isProcessing && !isSaving) {
-                    setError(null);
-                    fileInputRef.current?.click();
-                  }
-                }}
+                onClick={() => setShowAudioRecorder(true)}
                 disabled={isProcessing || isSaving}
-                className="h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
+                className="col-span-1 sm:col-span-2 h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
               >
-                <Upload className="h-8 w-8" />
-                <span>Upload Photo</span>
+                <Mic className="h-8 w-8" />
+                <span>Voice Expense</span>
               </Button>
+            )}
 
-              {showAudioRecorder ? (
-                <div className="col-span-1 sm:col-span-2 bg-card border rounded-xl p-4 shadow-lg flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
-                  <span className="text-sm font-medium">Record or Upload Voice Note</span>
-                  <AudioRecorder
-                    onRecordingComplete={handleAudioComplete}
-                    isProcessing={isProcessing}
-                  />
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setShowAudioRecorder(false)}
-                    className="mt-2 text-xs text-muted-foreground"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setShowAudioRecorder(true)}
-                  disabled={isProcessing || isSaving}
-                  className="col-span-1 sm:col-span-2 h-auto py-6 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex flex-col gap-2"
-                >
-                  <Mic className="h-8 w-8" />
-                  <span>Voice Expense</span>
-                </Button>
-              )}
+            <Button
+              size="lg"
+              variant="ghost"
+              onClick={handleManualEntry}
+              disabled={isProcessing || isSaving}
+              className="col-span-1 sm:col-span-2 h-auto py-4 text-base font-medium text-muted-foreground hover:text-foreground"
+            >
+              <PenLine className="mr-2 h-4 w-4" />
+              Or enter manually
+            </Button>
 
-              <Button
-                size="lg"
-                variant="ghost"
-                onClick={handleManualEntry}
-                disabled={isProcessing || isSaving}
-                className="col-span-1 sm:col-span-2 h-auto py-4 text-base font-medium text-muted-foreground hover:text-foreground"
-              >
-                <PenLine className="mr-2 h-4 w-4" />
-                Or enter manually
-              </Button>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
         </motion.div>
         {error && (
           <motion.div

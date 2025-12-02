@@ -70,6 +70,7 @@ import { ReceiptReviewDialog } from "@/components/ReceiptReviewDialog";
 import { ReviewExpenseDialog } from "@/components/ReviewExpenseDialog";
 import { Toaster } from "@/components/ui/sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import type { ExpenseData } from "@/lib/expense-service";
 import { useExpenseCreation } from "@/hooks/useExpenseCreation";
 import Webcam from "react-webcam";
@@ -126,7 +127,9 @@ export const ExpensesPage: React.FC = () => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
+
+  const { defaultCurrency } = useUserSettings();
+
   // Get current month in MM format for default filter
   const getCurrentMonth = () => {
     const now = new Date();
@@ -154,11 +157,11 @@ export const ExpensesPage: React.FC = () => {
   // Audio recording state
   const [extractedReceipts, setExtractedReceipts] = useState<ExpenseData[]>([]);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  
+
   // Camera state
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const webcamRef = React.useRef<Webcam>(null);
-  
+
   const {
     isProcessing,
     isSaving,
@@ -185,27 +188,6 @@ export const ExpensesPage: React.FC = () => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const fetchUserSettings = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/settings/currency", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data?.defaultCurrency) {
-          setDefaultCurrency(data.data.defaultCurrency);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch default currency:", error);
-    }
-  };
-
   const fetchExpenses = async () => {
     setLoading(true);
     setError(null);
@@ -224,7 +206,6 @@ export const ExpensesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUserSettings();
     fetchExpenses();
   }, []);
 
@@ -233,7 +214,11 @@ export const ExpensesPage: React.FC = () => {
     if (results && results.length > 0) {
       setExtractedReceipts(results);
       setIsReviewDialogOpen(true);
-      toast.success(`Extracted ${results.length} receipt${results.length > 1 ? 's' : ''} from audio`);
+      toast.success(
+        `Extracted ${results.length} receipt${
+          results.length > 1 ? "s" : ""
+        } from audio`
+      );
     }
   };
 

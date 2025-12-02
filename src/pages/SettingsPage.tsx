@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUserSettings, AIProvider } from "@/hooks/useUserSettings";
 
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
 const AI_PROVIDERS = [
@@ -19,91 +20,38 @@ const AI_PROVIDERS = [
   { value: "nvidia", label: "Nvidia NIM (Experimental)" },
   { value: "groq", label: "Groq (OCR + LLM)" },
 ];
-const API_BASE_URL = "/api";
-
-// Helper to get auth headers
-const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem("auth_token");
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-};
 
 export const SettingsPage: React.FC = () => {
-  const [currency, setCurrency] = useState("USD");
-  const [aiProvider, setAiProvider] = useState("gemini");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    defaultCurrency,
+    aiProvider: savedAiProvider,
+    isLoading,
+    isSaving,
+    updateSettings,
+  } = useUserSettings();
 
+  // Local state for form editing
+  const [currency, setCurrency] = useState(defaultCurrency);
+  const [aiProvider, setAiProvider] = useState<AIProvider>(savedAiProvider);
+
+  // Sync local state when settings are loaded
   useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    setIsLoading(true);
-    try {
-      const [currencyResponse, providerResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/settings/currency`, {
-          headers: getAuthHeaders(),
-          credentials: "include",
-        }),
-        fetch(`${API_BASE_URL}/settings/ai-provider`, {
-          headers: getAuthHeaders(),
-          credentials: "include",
-        }),
-      ]);
-
-      if (currencyResponse.ok) {
-        const currencyData = await currencyResponse.json();
-        setCurrency(currencyData.data?.defaultCurrency || "USD");
-      }
-
-      if (providerResponse.ok) {
-        const providerData = await providerResponse.json();
-        setAiProvider(providerData.data?.aiProvider || "gemini");
-      }
-    } catch (error) {
-      console.error("Failed to load settings:", error);
-      toast.error("Failed to load settings");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setCurrency(defaultCurrency);
+    setAiProvider(savedAiProvider);
+  }, [defaultCurrency, savedAiProvider]);
 
   const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const [currencyResponse, providerResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/settings/currency`, {
-          method: "PUT",
-          headers: getAuthHeaders(),
-          credentials: "include",
-          body: JSON.stringify({ defaultCurrency: currency }),
-        }),
-        fetch(`${API_BASE_URL}/settings/ai-provider`, {
-          method: "PUT",
-          headers: getAuthHeaders(),
-          credentials: "include",
-          body: JSON.stringify({ aiProvider }),
-        }),
-      ]);
+    const success = await updateSettings({
+      defaultCurrency: currency,
+      aiProvider: aiProvider,
+    });
 
-      if (currencyResponse.ok && providerResponse.ok) {
-        toast.success("Settings Saved", {
-          description: "Your preferences have been updated successfully.",
-        });
-      } else {
-        throw new Error("Failed to save settings");
-      }
-    } catch (error) {
-      console.error("Failed to save settings:", error);
+    if (success) {
+      toast.success("Settings Saved", {
+        description: "Your preferences have been updated successfully.",
+      });
+    } else {
       toast.error("Failed to save settings. Please try again.");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -137,7 +85,10 @@ export const SettingsPage: React.FC = () => {
                 AI Provider
               </Label>
               <div className="md:col-span-2 space-y-2">
-                <Select value={aiProvider} onValueChange={setAiProvider}>
+                <Select
+                  value={aiProvider}
+                  onValueChange={(value) => setAiProvider(value as AIProvider)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select AI provider" />
                   </SelectTrigger>
