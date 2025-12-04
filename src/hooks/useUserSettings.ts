@@ -33,7 +33,7 @@ interface UseUserSettingsReturn {
 }
 
 export const useUserSettings = (): UseUserSettingsReturn => {
-    const [defaultCurrency, setDefaultCurrency] = useState<string>('USD');
+    const [defaultCurrency, setDefaultCurrency] = useState<string>('EGP');
     const [aiProvider, setAiProvider] = useState<AIProvider>('gemini');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);

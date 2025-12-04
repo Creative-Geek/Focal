@@ -22,7 +22,7 @@ export async function getCurrency(c: Context<{ Bindings: Env; Variables: Variabl
 
     return json(
         success({
-            defaultCurrency: apiKey?.default_currency || 'USD',
+            defaultCurrency: apiKey?.default_currency || 'EGP',
         })
     );
 }

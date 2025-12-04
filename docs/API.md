@@ -32,7 +32,7 @@ The API enforces rate limiting on certain endpoints to prevent abuse.
 | `id`          | `TEXT`      | Primary Key, UUID           |
 | `user_id`     | `TEXT`      | Foreign Key to `users.id`   |
 | `amount`      | `REAL`      | Not Null                    |
-| `currency`    | `TEXT`      | Default `'USD'`             |
+| `currency`    | `TEXT`      | Default `'EGP'`             |
 | `quantity`    | `REAL`      | Default `1`                 |
 | `category`    | `TEXT`      |                             |
 | `description` | `TEXT`      |                             |
@@ -47,7 +47,7 @@ This table stores user-specific settings, including their preferred AI provider 
 | :----------------- | :---------- | :------------------------------------------------------------------ |
 | `id`               | `TEXT`      | Primary Key, UUID                                                   |
 | `user_id`          | `TEXT`      | Foreign Key to `users.id`, Unique                                   |
-| `default_currency` | `TEXT`      | 3-letter ISO code, Default `'USD'`                                  |
+| `default_currency` | `TEXT`      | 3-letter ISO code, Default `'EGP'`                                  |
 | `ai_provider`      | `TEXT`      | `'gemini'`, `'openai'`, `'nvidia'`, or `'groq'`, Default `'gemini'` |
 | `created_at`       | `TIMESTAMP` | Default `CURRENT_TIMESTAMP`                                         |
 

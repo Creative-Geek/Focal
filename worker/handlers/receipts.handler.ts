@@ -95,7 +95,7 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
 
         // Get user's default currency (check api_keys table for backward compatibility)
         const apiKeyRecord = await dbService.getApiKey(userId);
-        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
+        const defaultCurrency = apiKeyRecord?.default_currency || 'EGP';
 
         // Add user's default currency to the response
         const expenseData = {
@@ -158,7 +158,7 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
 
         // Get user's default currency
         const apiKeyRecord = await dbService.getApiKey(userId);
-        const defaultCurrency = apiKeyRecord?.default_currency || 'USD';
+        const defaultCurrency = apiKeyRecord?.default_currency || 'EGP';
 
         // Process audio with user's local date and currency context
         const audioService = new AudioService();

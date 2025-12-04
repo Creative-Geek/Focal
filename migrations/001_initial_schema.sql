@@ -16,7 +16,7 @@ CREATE TABLE api_keys (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   encrypted_key TEXT NOT NULL,
-  default_currency TEXT DEFAULT 'USD',
+  default_currency TEXT DEFAULT 'EGP',
   created_at INTEGER NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

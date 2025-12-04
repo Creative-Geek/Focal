@@ -96,7 +96,7 @@ export class DBService {
             const now = Date.now();
             await this.db
                 .prepare('INSERT INTO api_keys (id, user_id, encrypted_key, default_currency, ai_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-                .bind(id, userId, '', 'USD', aiProvider, now)
+                .bind(id, userId, '', 'EGP', aiProvider, now)
                 .run();
         }
     }
