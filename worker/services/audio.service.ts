@@ -23,6 +23,48 @@ export class AudioService {
     }
 
     /**
+     * Execute an operation with retry logic for multiple API keys
+     */
+    private async executeWithFallback<T>(
+        apiKeys: string[],
+        operation: (apiKey: string) => Promise<T>,
+        serviceName: string
+    ): Promise<T> {
+        let lastError: any = null;
+
+        for (let i = 0; i < apiKeys.length; i++) {
+            const apiKey = apiKeys[i];
+            const keyLabel = i === 0 ? 'primary' : `fallback ${i}`;
+            
+            try {
+                console.log(`[${serviceName}] Attempting with ${keyLabel} API key`);
+                const result = await operation(apiKey);
+                console.log(`[${serviceName}] Success with ${keyLabel} API key`);
+                return result;
+            } catch (error: any) {
+                console.error(`[${serviceName}] Error with ${keyLabel} API key:`, error);
+                lastError = error;
+                
+                // If this is a rate limit error and we have more keys to try, continue
+                if (this.isRateLimitError(error) && i < apiKeys.length - 1) {
+                    console.log(`[${serviceName}] Rate limit detected, trying next API key...`);
+                    continue;
+                }
+                
+                // If it's not a rate limit error, or we've exhausted all keys, break
+                if (!this.isRateLimitError(error)) {
+                    console.log(`[${serviceName}] Non-rate-limit error, not retrying`);
+                    break;
+                }
+            }
+        }
+
+        // All attempts failed
+        console.error(`[${serviceName}] All API keys exhausted`);
+        throw lastError;
+    }
+
+    /**
      * Process an audio file and extract receipt data
      * @param apiKeys - Gemini API key(s) - can be a single key or array of keys for fallback
      * @param audioData - Audio file as ArrayBuffer
@@ -39,7 +81,6 @@ export class AudioService {
     ): Promise<any> {
         // Support both single key (backward compatible) and array of keys
         const keys = Array.isArray(apiKeys) ? apiKeys : [apiKeys];
-        let lastError: any = null;
 
         // Use user's local date if provided, otherwise fall back to server date
         const currentDate = userLocalDate || new Date().toISOString().split('T')[0];
@@ -74,134 +115,115 @@ Key guidelines:
 ${currencyContext}
 Return a list of all receipts found in the audio.`;
 
-        // Try each API key in sequence
-        for (let i = 0; i < keys.length; i++) {
-            const apiKey = keys[i];
-            const keyLabel = i === 0 ? 'primary' : `fallback ${i}`;
+        try {
+            // Convert ArrayBuffer to base64
+            const base64Audio = btoa(
+                new Uint8Array(audioData).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
 
-            try {
-                console.log(`[AudioService] Attempting with ${keyLabel} API key`);
-                
-                const genAI = new GoogleGenerativeAI(apiKey);
+            const receipts = await this.executeWithFallback(
+                keys,
+                async (apiKey) => {
+                    const genAI = new GoogleGenerativeAI(apiKey);
 
-                const model = genAI.getGenerativeModel({
-                    model: 'gemini-2.0-flash',
-                    generationConfig: {
-                        responseMimeType: 'application/json',
-                        responseSchema: {
-                            type: SchemaType.OBJECT,
-                            properties: {
-                                receipts: {
-                                    type: SchemaType.ARRAY,
-                                    items: {
-                                        type: SchemaType.OBJECT,
-                                        properties: {
-                                            merchant: {
-                                                type: SchemaType.STRING,
-                                                description: 'Store or restaurant name',
-                                                nullable: false,
-                                            },
-                                            date: {
-                                                type: SchemaType.STRING,
-                                                description: 'Transaction date in YYYY-MM-DD format',
-                                                nullable: false,
-                                            },
-                                            total: {
-                                                type: SchemaType.NUMBER,
-                                                description: 'Total amount (number only, no currency symbols)',
-                                                nullable: false,
-                                            },
-                                            category: {
-                                                type: SchemaType.STRING,
-                                                description: 'Expense category (Food & Drink, Groceries, Travel, Shopping, Utilities, Other)',
-                                                nullable: false,
-                                            },
-                                            lineItems: {
-                                                type: SchemaType.ARRAY,
-                                                description: 'Individual items from the receipt',
-                                                items: {
-                                                    type: SchemaType.OBJECT,
-                                                    properties: {
-                                                        description: {
-                                                            type: SchemaType.STRING,
-                                                            description: 'Item description',
-                                                            nullable: false,
-                                                        },
-                                                        quantity: {
-                                                            type: SchemaType.NUMBER,
-                                                            description: 'Item quantity',
-                                                            nullable: false,
-                                                        },
-                                                        price: {
-                                                            type: SchemaType.NUMBER,
-                                                            description: 'Item price',
-                                                            nullable: false,
-                                                        },
-                                                    },
-                                                    required: ['description', 'quantity', 'price'],
+                    const model = genAI.getGenerativeModel({
+                        model: 'gemini-2.0-flash',
+                        generationConfig: {
+                            responseMimeType: 'application/json',
+                            responseSchema: {
+                                type: SchemaType.OBJECT,
+                                properties: {
+                                    receipts: {
+                                        type: SchemaType.ARRAY,
+                                        items: {
+                                            type: SchemaType.OBJECT,
+                                            properties: {
+                                                merchant: {
+                                                    type: SchemaType.STRING,
+                                                    description: 'Store or restaurant name',
+                                                    nullable: false,
                                                 },
-                                                nullable: false,
+                                                date: {
+                                                    type: SchemaType.STRING,
+                                                    description: 'Transaction date in YYYY-MM-DD format',
+                                                    nullable: false,
+                                                },
+                                                total: {
+                                                    type: SchemaType.NUMBER,
+                                                    description: 'Total amount (number only, no currency symbols)',
+                                                    nullable: false,
+                                                },
+                                                category: {
+                                                    type: SchemaType.STRING,
+                                                    description: 'Expense category (Food & Drink, Groceries, Travel, Shopping, Utilities, Other)',
+                                                    nullable: false,
+                                                },
+                                                lineItems: {
+                                                    type: SchemaType.ARRAY,
+                                                    description: 'Individual items from the receipt',
+                                                    items: {
+                                                        type: SchemaType.OBJECT,
+                                                        properties: {
+                                                            description: {
+                                                                type: SchemaType.STRING,
+                                                                description: 'Item description',
+                                                                nullable: false,
+                                                            },
+                                                            quantity: {
+                                                                type: SchemaType.NUMBER,
+                                                                description: 'Item quantity',
+                                                                nullable: false,
+                                                            },
+                                                            price: {
+                                                                type: SchemaType.NUMBER,
+                                                                description: 'Item price',
+                                                                nullable: false,
+                                                            },
+                                                        },
+                                                        required: ['description', 'quantity', 'price'],
+                                                    },
+                                                    nullable: false,
+                                                },
                                             },
+                                            required: ['merchant', 'date', 'total', 'category', 'lineItems'],
                                         },
-                                        required: ['merchant', 'date', 'total', 'category', 'lineItems'],
                                     },
                                 },
+                                required: ['receipts'],
                             },
-                            required: ['receipts'],
                         },
-                    },
-                });
+                    });
 
-                // Convert ArrayBuffer to base64
-                const base64Audio = btoa(
-                    new Uint8Array(audioData).reduce((data, byte) => data + String.fromCharCode(byte), '')
-                );
-
-                const result = await model.generateContent([
-                    systemInstruction,
-                    {
-                        inlineData: {
-                            mimeType: mimeType,
-                            data: base64Audio,
+                    const result = await model.generateContent([
+                        systemInstruction,
+                        {
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: base64Audio,
+                            },
                         },
-                    },
-                ]);
+                    ]);
 
-                const response = result.response;
-                const text = response.text();
+                    const response = result.response;
+                    const text = response.text();
 
-                // Parse JSON response
-                const parsedData = JSON.parse(text);
+                    // Parse JSON response
+                    const parsedData = JSON.parse(text);
+                    return parsedData.receipts || [];
+                },
+                'AudioService'
+            );
 
-                console.log(`[AudioService] Success with ${keyLabel} API key`);
-
-                return {
-                    success: true,
-                    data: parsedData.receipts || [],
-                };
-            } catch (error: any) {
-                console.error(`[AudioService] Error with ${keyLabel} API key:`, error);
-                lastError = error;
-                
-                // If this is a rate limit error and we have more keys to try, continue
-                if (this.isRateLimitError(error) && i < keys.length - 1) {
-                    console.log(`[AudioService] Rate limit detected, trying next API key...`);
-                    continue;
-                }
-                
-                // If it's not a rate limit error, or we've exhausted all keys, break
-                if (!this.isRateLimitError(error)) {
-                    console.log(`[AudioService] Non-rate-limit error, not retrying`);
-                    break;
-                }
-            }
+            return {
+                success: true,
+                data: receipts,
+            };
+        } catch (error: any) {
+            console.error('[AudioService] Error:', error);
+            return {
+                success: false,
+                error: error?.message || 'Failed to process audio',
+            };
         }
-
-        // All attempts failed
-        console.error('[AudioService] All API keys exhausted');
-        return {
-            success: false,
-            error: lastError?.message || 'Failed to process audio',
-        };
     }
 }

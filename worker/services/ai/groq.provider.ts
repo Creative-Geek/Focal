@@ -25,24 +25,6 @@ export class GroqProvider extends BaseAIProvider {
         this.modelName = modelName;
     }
 
-    /**
-     * Check if an error indicates rate limiting or quota exceeded
-     */
-    private isRateLimitError(error: any): boolean {
-        const errorMessage = error?.message?.toLowerCase() || '';
-        const errorString = String(error).toLowerCase();
-        
-        return (
-            errorMessage.includes('rate limit') ||
-            errorMessage.includes('quota') ||
-            errorMessage.includes('429') ||
-            errorMessage.includes('resource exhausted') ||
-            errorMessage.includes('too many requests') ||
-            errorString.includes('rate limit') ||
-            errorString.includes('quota')
-        );
-    }
-
     async processReceipt(base64Image: string): Promise<AIResponse> {
         try {
             console.log('[Groq Provider] Starting receipt processing...');
@@ -85,19 +67,10 @@ export class GroqProvider extends BaseAIProvider {
      * Structure OCR text using Groq LLM with JSON mode
      */
     private async structureWithGroq(ocrText: string): Promise<AIResponse> {
-        let lastError: any = null;
-
-        // Try each API key in sequence
-        for (let i = 0; i < this.groqApiKeys.length; i++) {
-            const groqApiKey = this.groqApiKeys[i];
-            const keyLabel = i === 0 ? 'primary' : `fallback ${i}`;
+        try {
+            const currentDate = this.getCurrentDate();
             
-            try {
-                console.log(`[Groq Provider] Attempting with ${keyLabel} API key`);
-                
-                const currentDate = this.getCurrentDate();
-
-                const systemPrompt = `You are an expert AI data extraction assistant.
+            const systemPrompt = `You are an expert AI data extraction assistant.
 
 Your task is to analyze the provided OCR text from a receipt and extract the specified information.
 You must format your response as a single, valid JSON object that strictly adheres to the provided schema.
@@ -118,7 +91,7 @@ You must format your response as a single, valid JSON object that strictly adher
 If the date is unclear or not visible, use ${currentDate} (today's date).
 If lineItems are not visible or unclear, return an empty array.`;
 
-                const userPrompt = `Please extract the information from the following receipt text according to the schema.
+            const userPrompt = `Please extract the information from the following receipt text according to the schema.
 
 Receipt text:
 ${ocrText}
@@ -138,88 +111,77 @@ Extract the merchant, date, total, category, and line items. Return ONLY a valid
   ]
 }`;
 
-                console.log('[Groq Provider] Making Groq API call...');
-                console.log('[Groq Provider] OCR text preview:', ocrText.substring(0, 200));
+            console.log('[Groq Provider] Making Groq API call...');
+            console.log('[Groq Provider] OCR text preview:', ocrText.substring(0, 200));
 
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${groqApiKey}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        model: this.modelName,
-                        messages: [
-                            {
-                                role: 'system',
-                                content: systemPrompt,
-                            },
-                            {
-                                role: 'user',
-                                content: userPrompt,
-                            },
-                        ],
-                        temperature: 0.2,
-                        max_tokens: 4000,
-                        response_format: {
-                            type: 'json_object',
+            const expenseData = await this.executeWithFallback(
+                this.groqApiKeys,
+                async (groqApiKey) => {
+                    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${groqApiKey}`,
+                            'Content-Type': 'application/json',
                         },
-                    }),
-                });
+                        body: JSON.stringify({
+                            model: this.modelName,
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: systemPrompt,
+                                },
+                                {
+                                    role: 'user',
+                                    content: userPrompt,
+                                },
+                            ],
+                            temperature: 0.2,
+                            max_tokens: 4000,
+                            response_format: {
+                                type: 'json_object',
+                            },
+                        }),
+                    });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
-                }
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+                    }
 
-                const result: any = await response.json();
-                const content = result.choices?.[0]?.message?.content;
+                    const result: any = await response.json();
+                    const content = result.choices?.[0]?.message?.content;
 
-                if (!content) {
-                    throw new Error('No response from Groq API');
-                }
+                    if (!content) {
+                        throw new Error('No response from Groq API');
+                    }
 
-                const expenseData = JSON.parse(content);
+                    const data = JSON.parse(content);
 
-                // Validate required fields
-                if (!expenseData.merchant || !expenseData.date || !expenseData.total || !expenseData.category) {
-                    throw new Error('Missing required fields in structured data');
-                }
+                    // Validate required fields
+                    if (!data.merchant || !data.date || !data.total || !data.category) {
+                        throw new Error('Missing required fields in structured data');
+                    }
 
-                // Ensure lineItems is an array
-                if (!Array.isArray(expenseData.lineItems)) {
-                    expenseData.lineItems = [];
-                }
+                    // Ensure lineItems is an array
+                    if (!Array.isArray(data.lineItems)) {
+                        data.lineItems = [];
+                    }
 
-                console.log(`[Groq Provider] Success with ${keyLabel} API key`);
+                    return data;
+                },
+                'Groq Provider'
+            );
 
-                return {
-                    success: true,
-                    data: expenseData,
-                };
-            } catch (error: any) {
-                console.error(`[Groq Provider] Error with ${keyLabel} API key:`, error);
-                lastError = error;
-                
-                // If this is a rate limit error and we have more keys to try, continue
-                if (this.isRateLimitError(error) && i < this.groqApiKeys.length - 1) {
-                    console.log(`[Groq Provider] Rate limit detected, trying next API key...`);
-                    continue;
-                }
-                
-                // If it's not a rate limit error, or we've exhausted all keys, break
-                if (!this.isRateLimitError(error)) {
-                    console.log(`[Groq Provider] Non-rate-limit error, not retrying`);
-                    break;
-                }
-            }
+            return {
+                success: true,
+                data: expenseData,
+            };
+        } catch (error: any) {
+            console.error('[Groq Provider] Structuring error:', error);
+            return {
+                success: false,
+                error: error.message || 'Failed to structure receipt data',
+            };
         }
-
-        // All attempts failed
-        console.error('[Groq Provider] All API keys exhausted');
-        return {
-            success: false,
-            error: lastError?.message || 'Failed to structure receipt data',
-        };
     }
 }
