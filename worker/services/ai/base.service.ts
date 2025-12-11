@@ -74,4 +74,68 @@ Important:
 - If lineItems are not visible or unclear, return an empty array
 - All fields are required and must match the schema`;
     }
+
+    /**
+     * Check if an error indicates rate limiting or quota exceeded
+     */
+    protected isRateLimitError(error: any): boolean {
+        const errorMessage = error?.message?.toLowerCase() || '';
+        const errorString = String(error).toLowerCase();
+        
+        return (
+            errorMessage.includes('rate limit') ||
+            errorMessage.includes('quota') ||
+            errorMessage.includes('429') ||
+            errorMessage.includes('resource exhausted') ||
+            errorMessage.includes('too many requests') ||
+            errorString.includes('rate limit') ||
+            errorString.includes('quota')
+        );
+    }
+
+    /**
+     * Execute an operation with retry logic for multiple API keys
+     * @param apiKeys - Array of API keys to try
+     * @param operation - Async function that takes an API key and performs the operation
+     * @param providerName - Name of the provider for logging
+     * @returns Promise with the result
+     */
+    protected async executeWithFallback<T>(
+        apiKeys: string[],
+        operation: (apiKey: string) => Promise<T>,
+        providerName: string
+    ): Promise<T> {
+        let lastError: any = null;
+
+        for (let i = 0; i < apiKeys.length; i++) {
+            const apiKey = apiKeys[i];
+            const keyLabel = i === 0 ? 'primary' : `fallback ${i}`;
+            
+            try {
+                console.log(`[${providerName}] Attempting with ${keyLabel} API key`);
+                const result = await operation(apiKey);
+                console.log(`[${providerName}] Success with ${keyLabel} API key`);
+                return result;
+            } catch (error: any) {
+                console.error(`[${providerName}] Error with ${keyLabel} API key:`, error);
+                lastError = error;
+                
+                // If this is a rate limit error and we have more keys to try, continue
+                if (this.isRateLimitError(error) && i < apiKeys.length - 1) {
+                    console.log(`[${providerName}] Rate limit detected, trying next API key...`);
+                    continue;
+                }
+                
+                // If it's not a rate limit error, or we've exhausted all keys, break
+                if (!this.isRateLimitError(error)) {
+                    console.log(`[${providerName}] Non-rate-limit error, not retrying`);
+                    break;
+                }
+            }
+        }
+
+        // All attempts failed
+        console.error(`[${providerName}] All API keys exhausted`);
+        throw lastError;
+    }
 }

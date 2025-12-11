@@ -31,17 +31,29 @@ AI_PROVIDER="gemini"
 # Get from: https://aistudio.google.com/app/apikey
 GEMINI_API_KEY="your-gemini-api-key-here"
 
+# GEMINI_API_KEY_2 - Fallback Gemini API key for rate limit/error scenarios (optional)
+# GEMINI_API_KEY_2="your-secondary-gemini-api-key-here"
+
 # GITHUB_TOKEN - For OpenAI GPT-4o via GitHub Models
 # Get from: https://github.com/settings/tokens
 # GITHUB_TOKEN="your-github-token-here"
+
+# GITHUB_TOKEN_2 - Fallback GitHub token for rate limit/error scenarios (optional)
+# GITHUB_TOKEN_2="your-secondary-github-token-here"
 
 # NVIDIA_API_KEY - For Nvidia NIM
 # Get from: https://build.nvidia.com/
 # NVIDIA_API_KEY="your-nvidia-api-key-here"
 
+# NVIDIA_API_KEY_2 - Fallback Nvidia API key for rate limit/error scenarios (optional)
+# NVIDIA_API_KEY_2="your-secondary-nvidia-api-key-here"
+
 # GROQ_API_KEY - For Groq (OCR + LLM approach)
 # Get from: https://console.groq.com/keys
 # GROQ_API_KEY="your-groq-api-key-here"
+
+# GROQ_API_KEY_2 - Fallback Groq API key for rate limit/error scenarios (optional)
+# GROQ_API_KEY_2="your-secondary-groq-api-key-here"
 
 # Azure Computer Vision (Required for Groq provider only)
 # Get from: https://portal.azure.com

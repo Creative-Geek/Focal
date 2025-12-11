@@ -73,13 +73,14 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
     console.log('[Receipt Handler] Env default:', env.AI_PROVIDER);
 
     try {
-        // Get the appropriate API key for the provider
-        const apiKey = AIProviderFactory.getApiKey(env, providerType);
+        // Get the appropriate API key(s) for the provider (includes fallback if configured)
+        const apiKeys = AIProviderFactory.getApiKeys(env, providerType);
 
         console.log('[Receipt Handler] Creating provider instance...');
+        console.log('[Receipt Handler] API keys available:', apiKeys.length);
 
         // Create AI provider instance (pass env for Groq provider Azure credentials)
-        const aiProvider = AIProviderFactory.createProvider(providerType, apiKey, modelName, env);
+        const aiProvider = AIProviderFactory.createProvider(providerType, apiKeys, modelName, env);
 
         console.log('[Receipt Handler] Processing receipt with', providerType);
 
@@ -153,8 +154,8 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
             return error('Invalid file type. Please upload an audio file.', 400);
         }
 
-        // Get Gemini API key
-        const apiKey = AIProviderFactory.getApiKey(env, 'gemini');
+        // Get Gemini API key(s) (includes fallback if configured)
+        const apiKeys = AIProviderFactory.getApiKeys(env, 'gemini');
 
         // Get user's default currency
         const apiKeyRecord = await dbService.getApiKey(userId);
@@ -167,9 +168,10 @@ export async function processAudioReceipt(c: Context<{ Bindings: Env; Variables:
         console.log('[Receipt Handler] Processing audio receipt...');
         console.log('[Receipt Handler] User local date:', userLocalDate || 'not provided');
         console.log('[Receipt Handler] User currency:', defaultCurrency);
+        console.log('[Receipt Handler] API keys available:', apiKeys.length);
 
         const result = await audioService.processAudio(
-            apiKey,
+            apiKeys,
             arrayBuffer,
             audioFile.type,
             userLocalDate,

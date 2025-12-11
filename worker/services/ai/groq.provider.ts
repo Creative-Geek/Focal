@@ -6,19 +6,20 @@ import { OcrService } from '../ocr.service';
  * Uses Azure Computer Vision for OCR and Groq for LLM structuring
  */
 export class GroqProvider extends BaseAIProvider {
-    private groqApiKey: string;
+    private groqApiKeys: string[];
     private azureEndpoint: string;
     private azureApiKey: string;
     private modelName: string;
 
     constructor(
-        groqApiKey: string,
+        groqApiKeys: string | string[],
         azureEndpoint: string,
         azureApiKey: string,
         modelName: string = 'openai/gpt-oss-20b'
     ) {
         super();
-        this.groqApiKey = groqApiKey;
+        // Support both single key (backward compatible) and array of keys
+        this.groqApiKeys = Array.isArray(groqApiKeys) ? groqApiKeys : [groqApiKeys];
         this.azureEndpoint = azureEndpoint;
         this.azureApiKey = azureApiKey;
         this.modelName = modelName;
@@ -47,7 +48,7 @@ export class GroqProvider extends BaseAIProvider {
             console.log('[Groq Provider] OCR text length:', ocrResult.text.length);
             console.log('[Groq Provider] Calling Groq LLM for structuring...');
 
-            // Step 2: Structure the OCR text using Groq LLM
+            // Step 2: Structure the OCR text using Groq LLM (with fallback)
             const structuredData = await this.structureWithGroq(ocrResult.text);
 
             console.log('[Groq Provider] Structuring result:', structuredData.success ? 'Success' : 'Failed');
@@ -68,7 +69,7 @@ export class GroqProvider extends BaseAIProvider {
     private async structureWithGroq(ocrText: string): Promise<AIResponse> {
         try {
             const currentDate = this.getCurrentDate();
-
+            
             const systemPrompt = `You are an expert AI data extraction assistant.
 
 Your task is to analyze the provided OCR text from a receipt and extract the specified information.
@@ -113,62 +114,70 @@ Extract the merchant, date, total, category, and line items. Return ONLY a valid
             console.log('[Groq Provider] Making Groq API call...');
             console.log('[Groq Provider] OCR text preview:', ocrText.substring(0, 200));
 
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.groqApiKey}`,
-                    'Content-Type': 'application/json',
+            const expenseData = await this.executeWithFallback(
+                this.groqApiKeys,
+                async (groqApiKey) => {
+                    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${groqApiKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            model: this.modelName,
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: systemPrompt,
+                                },
+                                {
+                                    role: 'user',
+                                    content: userPrompt,
+                                },
+                            ],
+                            temperature: 0.2,
+                            max_tokens: 4000,
+                            response_format: {
+                                type: 'json_object',
+                            },
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+                    }
+
+                    const result: any = await response.json();
+                    const content = result.choices?.[0]?.message?.content;
+
+                    if (!content) {
+                        throw new Error('No response from Groq API');
+                    }
+
+                    const data = JSON.parse(content);
+
+                    // Validate required fields
+                    if (!data.merchant || !data.date || !data.total || !data.category) {
+                        throw new Error('Missing required fields in structured data');
+                    }
+
+                    // Ensure lineItems is an array
+                    if (!Array.isArray(data.lineItems)) {
+                        data.lineItems = [];
+                    }
+
+                    return data;
                 },
-                body: JSON.stringify({
-                    model: this.modelName,
-                    messages: [
-                        {
-                            role: 'system',
-                            content: systemPrompt,
-                        },
-                        {
-                            role: 'user',
-                            content: userPrompt,
-                        },
-                    ],
-                    temperature: 0.2,
-                    max_tokens: 4000,
-                    response_format: {
-                        type: 'json_object',
-                    },
-                }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Groq API error: ${response.status} - ${errorText}`);
-            }
-
-            const result: any = await response.json();
-            const content = result.choices?.[0]?.message?.content;
-
-            if (!content) {
-                throw new Error('No response from Groq API');
-            }
-
-            const expenseData = JSON.parse(content);
-
-            // Validate required fields
-            if (!expenseData.merchant || !expenseData.date || !expenseData.total || !expenseData.category) {
-                throw new Error('Missing required fields in structured data');
-            }
-
-            // Ensure lineItems is an array
-            if (!Array.isArray(expenseData.lineItems)) {
-                expenseData.lineItems = [];
-            }
+                'Groq Provider'
+            );
 
             return {
                 success: true,
                 data: expenseData,
             };
         } catch (error: any) {
-            console.error('Groq structuring error:', error);
+            console.error('[Groq Provider] Structuring error:', error);
             return {
                 success: false,
                 error: error.message || 'Failed to structure receipt data',
