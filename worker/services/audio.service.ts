@@ -10,7 +10,7 @@ export class AudioService {
     private isRateLimitError(error: any): boolean {
         const errorMessage = error?.message?.toLowerCase() || '';
         const errorString = String(error).toLowerCase();
-        
+
         return (
             errorMessage.includes('rate limit') ||
             errorMessage.includes('quota') ||
@@ -35,7 +35,7 @@ export class AudioService {
         for (let i = 0; i < apiKeys.length; i++) {
             const apiKey = apiKeys[i];
             const keyLabel = i === 0 ? 'primary' : `fallback ${i}`;
-            
+
             try {
                 console.log(`[${serviceName}] Attempting with ${keyLabel} API key`);
                 const result = await operation(apiKey);
@@ -44,13 +44,13 @@ export class AudioService {
             } catch (error: any) {
                 console.error(`[${serviceName}] Error with ${keyLabel} API key:`, error);
                 lastError = error;
-                
+
                 // If this is a rate limit error and we have more keys to try, continue
                 if (this.isRateLimitError(error) && i < apiKeys.length - 1) {
                     console.log(`[${serviceName}] Rate limit detected, trying next API key...`);
                     continue;
                 }
-                
+
                 // If it's not a rate limit error, or we've exhausted all keys, break
                 if (!this.isRateLimitError(error)) {
                     console.log(`[${serviceName}] Non-rate-limit error, not retrying`);
@@ -127,7 +127,7 @@ Return a list of all receipts found in the audio.`;
                     const genAI = new GoogleGenerativeAI(apiKey);
 
                     const model = genAI.getGenerativeModel({
-                        model: 'gemini-2.0-flash',
+                        model: 'gemini-2.5-flash',
                         generationConfig: {
                             responseMimeType: 'application/json',
                             responseSchema: {
