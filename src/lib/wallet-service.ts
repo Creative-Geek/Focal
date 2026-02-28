@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+const API_BASE_URL = '/api';
 
 export interface Wallet {
     id: string;
@@ -17,13 +17,13 @@ export interface WalletFormData {
     currency: string;
 }
 
-const API_URL = `${API_BASE_URL}/api/wallets`;
+const API_URL = `${API_BASE_URL}/wallets`;
 
 /**
  * Get authentication token from localStorage
  */
 function getAuthToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem('auth_token');
 }
 
 /**
