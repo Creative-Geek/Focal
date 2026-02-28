@@ -8,6 +8,7 @@ import * as apiKeysHandler from './handlers/apiKeys.handler';
 import * as receiptsHandler from './handlers/receipts.handler';
 import * as errorsHandler from './handlers/errors.handler';
 import * as adminHandler from './handlers/admin.handler';
+import * as walletHandler from './handlers/wallet.handler';
 
 type Variables = {
     userId: string;
@@ -50,6 +51,13 @@ export function createRouter() {
     app.post('/expenses', authMiddleware, expensesHandler.createExpense);
     app.put('/expenses/:id', authMiddleware, expensesHandler.updateExpense);
     app.delete('/expenses/:id', authMiddleware, expensesHandler.deleteExpense);
+
+    // ============ WALLET ROUTES (Protected) ============
+    app.get('/wallets', authMiddleware, walletHandler.getWallets);
+    app.get('/wallets/:id', authMiddleware, walletHandler.getWalletById);
+    app.post('/wallets', authMiddleware, walletHandler.createWallet);
+    app.put('/wallets/:id', authMiddleware, walletHandler.updateWallet);
+    app.delete('/wallets/:id', authMiddleware, walletHandler.deleteWallet);
 
     // ============ RECEIPT PROCESSING ROUTES (Protected) ============
     app.post('/receipts/process', authMiddleware, receiptsHandler.processReceipt);

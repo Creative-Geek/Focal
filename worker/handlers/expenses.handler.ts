@@ -75,7 +75,7 @@ export async function createExpense(c: Context<{ Bindings: Env; Variables: Varia
         return error(validation.error, 400);
     }
 
-    const { merchant, date, total, currency, category, lineItems } = validation.data;
+    const { merchant, date, total, currency, category, walletId, lineItems } = validation.data;
 
     // Create expense
     const expenseId = crypto.randomUUID();
@@ -88,6 +88,7 @@ export async function createExpense(c: Context<{ Bindings: Env; Variables: Varia
             total,
             currency,
             category,
+            wallet_id: walletId || null,
         },
         lineItems
     );
@@ -126,7 +127,7 @@ export async function updateExpense(c: Context<{ Bindings: Env; Variables: Varia
         return error(validation.error, 400);
     }
 
-    const { merchant, date, total, currency, category, lineItems } = validation.data;
+    const { merchant, date, total, currency, category, walletId, lineItems } = validation.data;
 
     // Update expense
     await dbService.updateExpense(
@@ -138,6 +139,7 @@ export async function updateExpense(c: Context<{ Bindings: Env; Variables: Varia
             total,
             currency,
             category,
+            wallet_id: walletId !== undefined ? walletId : undefined,
         },
         lineItems
     );

@@ -57,6 +57,7 @@ export interface Expense {
     total: number;
     currency: string;
     category: string;
+    wallet_id?: string | null; // Optional wallet association
     created_at: number;
     updated_at: number;
 }
@@ -82,6 +83,17 @@ export interface JWTPayload {
     email: string;
     iat?: number;
     exp?: number;
+}
+
+export interface Wallet {
+    id: string;
+    user_id: string;
+    name: string;
+    initial_balance: number;
+    current_balance: number;
+    currency: string;
+    created_at: number;
+    updated_at: number;
 }
 
 export interface APIResponse<T = unknown> {
