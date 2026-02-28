@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useRef, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, Plus, ScanLine } from "lucide-react";
+import { Trash2, Plus, ScanLine, Wallet as WalletIcon } from "lucide-react";
 import type { ExpenseData } from "@/lib/expense-service";
+import { getWallets, type Wallet } from "@/lib/wallet-service";
 interface ExpenseFormProps {
   value: ExpenseData;
   onChange: (data: ExpenseData) => void;
@@ -19,6 +20,25 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   value,
   onChange,
 }) => {
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [loadingWallets, setLoadingWallets] = useState(true);
+
+  // Load wallets on mount
+  useEffect(() => {
+    const fetchWallets = async () => {
+      try {
+        const fetchedWallets = await getWallets();
+        setWallets(fetchedWallets);
+      } catch (error) {
+        console.error('Failed to load wallets:', error);
+      } finally {
+        setLoadingWallets(false);
+      }
+    };
+
+    fetchWallets();
+  }, []);
+
   // Use refs to keep stable references to latest value and onChange
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
@@ -141,6 +161,31 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             className="text-sm sm:text-base"
           />
         </div>
+      </div>
+      <div>
+        <Label htmlFor="wallet" className="text-sm flex items-center gap-1">
+          <WalletIcon className="h-3 w-3" />
+          Wallet (Optional)
+        </Label>
+        <Select
+          value={value.walletId || "none"}
+          onValueChange={(newValue) =>
+            handleFieldChange("walletId", newValue === "none" ? null : newValue)
+          }
+          disabled={loadingWallets}
+        >
+          <SelectTrigger className="text-sm sm:text-base">
+            <SelectValue placeholder={loadingWallets ? "Loading wallets..." : "Select wallet"} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No wallet</SelectItem>
+            {wallets.map((wallet) => (
+              <SelectItem key={wallet.id} value={wallet.id}>
+                {wallet.name} ({wallet.currency} {wallet.current_balance.toFixed(2)})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <h3 className="font-semibold pt-3 sm:pt-4 border-t text-sm sm:text-base">
         Line Items
