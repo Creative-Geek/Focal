@@ -11,7 +11,7 @@ export class BrevoService {
 
     constructor(
         apiKey: string,
-        senderEmail: string = 'verification@focal.creative-geek.tech',
+        senderEmail: string = 'verification@focal.creativegeek.net',
         senderName: string = 'Focal - Financial Tracker'
     ) {
         if (!apiKey) {
@@ -35,7 +35,7 @@ export class BrevoService {
             const verificationUrl = `${appUrl}/verify?token=${verificationToken}`;
             // Use PNG for email (Gmail blocks SVG), ensure URL is public even when testing locally
             const logoUrl = appUrl.includes('localhost')
-                ? 'https://focal.creative-geek.tech/images/logo-email.png'
+                ? 'https://focal.creativegeek.net/images/logo-email.png'
                 : `${appUrl}/images/logo-email.png`;
 
             const emailData = {
@@ -144,9 +144,9 @@ export class BrevoService {
                                             <strong style="color: #0a0a0a;">The Focal Team</strong>
                                         </p>
                                         <p style="margin: 0; color: #a3a3a3; font-size: 12px;">
-                                            <a href="mailto:support@focal.creative-geek.tech" style="color: #737373; text-decoration: none;">Support</a>
+                                            <a href="mailto:support@focal.creativegeek.net" style="color: #737373; text-decoration: none;">Support</a>
                                             <span style="color: #d4d4d4; margin: 0 8px;">|</span>
-                                            <a href="https://focal.creative-geek.tech" style="color: #737373; text-decoration: none;">Website</a>
+                                            <a href="https://focal.creativegeek.net" style="color: #737373; text-decoration: none;">Website</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -240,7 +240,7 @@ The Focal Team
             const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
             // Use PNG for email (Gmail blocks SVG), ensure URL is public even when testing locally
             const logoUrl = appUrl.includes('localhost')
-                ? 'https://focal.creative-geek.tech/images/logo-email.png'
+                ? 'https://focal.creativegeek.net/images/logo-email.png'
                 : `${appUrl}/images/logo-email.png`;
 
             const emailData = {
@@ -349,9 +349,9 @@ The Focal Team
                                             <strong style="color: #0a0a0a;">Contact Focal Support</strong>
                                         </p>
                                         <p style="margin: 0; color: #a3a3a3; font-size: 12px;">
-                                            <a href="mailto:support@focal.creative-geek.tech" style="color: #737373; text-decoration: none;">Support</a>
+                                            <a href="mailto:support@focal.creativegeek.net" style="color: #737373; text-decoration: none;">Support</a>
                                             <span style="color: #d4d4d4; margin: 0 8px;">|</span>
-                                            <a href="https://focal.creative-geek.tech" style="color: #737373; text-decoration: none;">Website</a>
+                                            <a href="https://focal.creativegeek.net" style="color: #737373; text-decoration: none;">Website</a>
                                         </p>
                                     </td>
                                 </tr>

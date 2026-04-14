@@ -7,7 +7,7 @@ A modern, privacy-focused expense tracking Progressive Web App (PWA) with AI-pow
 
 ![Dashboard](images/dashboard.png)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://focal.creative-geek.tech)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://focal.creativegeek.net)
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
 </div>
@@ -101,7 +101,7 @@ Built with [React](https://react.dev), [Cloudflare](https://cloudflare.com), [sh
 
 <div align="center">
 
-**[Live Demo](https://focal.creative-geek.tech)** • **[Documentation](docs/DEVELOPMENT.md)** • **[Report Bug](https://github.com/Creative-Geek/Focal/issues)**
+**[Live Demo](https://focal.creativegeek.net)** • **[Documentation](docs/DEVELOPMENT.md)** • **[Report Bug](https://github.com/Creative-Geek/Focal/issues)**
 
 Made with ❤️ by Creative Geek
 

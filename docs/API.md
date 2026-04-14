@@ -5,7 +5,7 @@ Complete API reference for Focal's backend endpoints.
 ## Base URL
 
 - **Development**: `http://localhost:8787/api`
-- **Production**: `https://focal.creative-geek.tech/api`
+- **Production**: `https://focal.creativegeek.net/api`
 
 ## Authentication
 
