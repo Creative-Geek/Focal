@@ -1,4 +1,4 @@
-import { Env, User, Expense, LineItem, ApiKey, Session } from '../types';
+import { Env, User, Expense, LineItem, ApiKey, Session, Wallet } from '../types';
 
 // ============ ADMIN ANALYTICS TYPES ============
 
@@ -150,8 +150,8 @@ export class DBService {
 
         // Insert expense
         await this.db
-            .prepare('INSERT INTO expenses (id, user_id, merchant, date, total, currency, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-            .bind(expense.id, expense.user_id, expense.merchant, expense.date, expense.total, expense.currency, expense.category, now, now)
+            .prepare('INSERT INTO expenses (id, user_id, merchant, date, total, currency, category, wallet_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            .bind(expense.id, expense.user_id, expense.merchant, expense.date, expense.total, expense.currency, expense.category, expense.wallet_id || null, now, now)
             .run();
 
         // Insert line items
@@ -161,6 +161,15 @@ export class DBService {
                 .prepare('INSERT INTO line_items (id, expense_id, description, quantity, price) VALUES (?, ?, ?, ?, ?)')
                 .bind(itemId, expense.id, item.description, item.quantity, item.price)
                 .run();
+        }
+
+        // Update wallet balance if wallet_id is provided
+        if (expense.wallet_id) {
+            const wallet = await this.getWalletById(expense.wallet_id, expense.user_id);
+            if (wallet) {
+                const newBalance = wallet.current_balance - expense.total;
+                await this.updateWalletBalance(expense.wallet_id, expense.user_id, newBalance);
+            }
         }
 
         return {
@@ -200,9 +209,15 @@ export class DBService {
     async updateExpense(id: string, userId: string, updates: Partial<Omit<Expense, 'id' | 'user_id' | 'created_at' | 'updated_at'>>, lineItems?: Array<{ description: string; quantity: number; price: number }>): Promise<void> {
         const now = Date.now();
 
+        // Get the existing expense to handle wallet balance updates
+        const existingExpense = await this.getExpenseById(id, userId);
+        if (!existingExpense) {
+            throw new Error('Expense not found');
+        }
+
         // Build dynamic UPDATE query
         const fields: string[] = [];
-        const values: (string | number)[] = [];
+        const values: (string | number | null)[] = [];
 
         if (updates.merchant !== undefined) {
             fields.push('merchant = ?');
@@ -224,6 +239,10 @@ export class DBService {
             fields.push('category = ?');
             values.push(updates.category);
         }
+        if (updates.wallet_id !== undefined) {
+            fields.push('wallet_id = ?');
+            values.push(updates.wallet_id || null);
+        }
 
         fields.push('updated_at = ?');
         values.push(now);
@@ -234,6 +253,32 @@ export class DBService {
             .prepare(`UPDATE expenses SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`)
             .bind(...values)
             .run();
+
+        // Handle wallet balance updates
+        const newTotal = updates.total !== undefined ? updates.total : existingExpense.total;
+        const oldWalletId = existingExpense.wallet_id;
+        const newWalletId = updates.wallet_id !== undefined ? updates.wallet_id : existingExpense.wallet_id;
+
+        // If wallet changed or total changed, update balances
+        if (oldWalletId !== newWalletId || (newWalletId && updates.total !== undefined)) {
+            // Restore balance to old wallet
+            if (oldWalletId) {
+                const oldWallet = await this.getWalletById(oldWalletId, userId);
+                if (oldWallet) {
+                    const restoredBalance = oldWallet.current_balance + existingExpense.total;
+                    await this.updateWalletBalance(oldWalletId, userId, restoredBalance);
+                }
+            }
+
+            // Deduct from new wallet
+            if (newWalletId) {
+                const newWallet = await this.getWalletById(newWalletId, userId);
+                if (newWallet) {
+                    const newBalance = newWallet.current_balance - newTotal;
+                    await this.updateWalletBalance(newWalletId, userId, newBalance);
+                }
+            }
+        }
 
         // Update line items if provided
         if (lineItems) {
@@ -255,6 +300,18 @@ export class DBService {
     }
 
     async deleteExpense(id: string, userId: string): Promise<void> {
+        // Get the expense to restore wallet balance
+        const expense = await this.getExpenseById(id, userId);
+
+        if (expense && expense.wallet_id) {
+            // Restore balance to wallet before deleting
+            const wallet = await this.getWalletById(expense.wallet_id, userId);
+            if (wallet) {
+                const restoredBalance = wallet.current_balance + expense.total;
+                await this.updateWalletBalance(expense.wallet_id, userId, restoredBalance);
+            }
+        }
+
         // Line items will be cascade deleted
         await this.db
             .prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?')
@@ -599,5 +656,90 @@ export class DBService {
         }
 
         return expensesWithLineItems;
+    }
+
+    // ============ WALLET OPERATIONS ============
+
+    async createWallet(wallet: Omit<Wallet, 'created_at' | 'updated_at'>): Promise<Wallet> {
+        const now = Date.now();
+
+        await this.db
+            .prepare('INSERT INTO wallets (id, user_id, name, initial_balance, current_balance, currency, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+            .bind(wallet.id, wallet.user_id, wallet.name, wallet.initial_balance, wallet.current_balance, wallet.currency, now, now)
+            .run();
+
+        return {
+            ...wallet,
+            created_at: now,
+            updated_at: now,
+        };
+    }
+
+    async getWalletsByUserId(userId: string): Promise<Wallet[]> {
+        const result = await this.db
+            .prepare('SELECT * FROM wallets WHERE user_id = ? ORDER BY created_at DESC')
+            .bind(userId)
+            .all<Wallet>();
+
+        return result.results || [];
+    }
+
+    async getWalletById(id: string, userId: string): Promise<Wallet | null> {
+        const result = await this.db
+            .prepare('SELECT * FROM wallets WHERE id = ? AND user_id = ?')
+            .bind(id, userId)
+            .first<Wallet>();
+
+        return result || null;
+    }
+
+    async updateWallet(id: string, userId: string, updates: Partial<Omit<Wallet, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+        const now = Date.now();
+
+        const fields: string[] = [];
+        const values: (string | number)[] = [];
+
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            values.push(updates.name);
+        }
+        if (updates.initial_balance !== undefined) {
+            fields.push('initial_balance = ?');
+            values.push(updates.initial_balance);
+        }
+        if (updates.current_balance !== undefined) {
+            fields.push('current_balance = ?');
+            values.push(updates.current_balance);
+        }
+        if (updates.currency !== undefined) {
+            fields.push('currency = ?');
+            values.push(updates.currency);
+        }
+
+        fields.push('updated_at = ?');
+        values.push(now);
+
+        values.push(id, userId);
+
+        await this.db
+            .prepare(`UPDATE wallets SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`)
+            .bind(...values)
+            .run();
+    }
+
+    async updateWalletBalance(id: string, userId: string, newBalance: number): Promise<void> {
+        const now = Date.now();
+
+        await this.db
+            .prepare('UPDATE wallets SET current_balance = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+            .bind(newBalance, now, id, userId)
+            .run();
+    }
+
+    async deleteWallet(id: string, userId: string): Promise<void> {
+        await this.db
+            .prepare('DELETE FROM wallets WHERE id = ? AND user_id = ?')
+            .bind(id, userId)
+            .run();
     }
 }

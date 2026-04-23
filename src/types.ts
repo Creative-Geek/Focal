@@ -14,6 +14,7 @@ export interface Expense {
     lineItems: LineItem[];
     currency: string;
     category: string;
+    walletId?: string | null;
 }
 
 export type ExpenseData = Omit<Expense, 'id'>;

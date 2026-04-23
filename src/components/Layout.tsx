@@ -51,6 +51,17 @@ const Header: React.FC = () => {
             >
               Expenses
             </NavLink>
+            <NavLink
+              to="/wallets"
+              className={({ isActive }) =>
+                cn(
+                  "font-semibold transition-colors duration-200",
+                  isActive ? activeLinkClass : inactiveLinkClass
+                )
+              }
+            >
+              Wallets
+            </NavLink>
           </nav>
           <div className="flex items-center gap-2">
             <Button
@@ -102,7 +113,7 @@ const BottomNav: React.FC = () => {
   const inactiveLinkClass = "text-gray-500 dark:text-gray-400";
   const getLinkClass = (path: string) =>
     cn(
-      "flex flex-col items-center gap-1 transition-colors duration-200 w-1/3",
+      "flex flex-col items-center gap-1 transition-colors duration-200 w-1/4",
       location.pathname === path ? activeLinkClass : inactiveLinkClass
     );
   return (
@@ -114,6 +125,10 @@ const BottomNav: React.FC = () => {
       <NavLink to="/expenses" className={getLinkClass("/expenses")}>
         <Wallet className="h-6 w-6" />
         <span className="text-xs font-medium">Expenses</span>
+      </NavLink>
+      <NavLink to="/wallets" className={getLinkClass("/wallets")}>
+        <Wallet className="h-6 w-6" />
+        <span className="text-xs font-medium">Wallets</span>
       </NavLink>
       <NavLink to="/settings" className={getLinkClass("/settings")}>
         <Settings className="h-6 w-6" />

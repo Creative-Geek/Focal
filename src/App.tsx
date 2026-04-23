@@ -4,6 +4,7 @@ import { HomePage } from "@/pages/HomePage";
 import { ExpensesPage } from "@/pages/ExpensesPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { AdminPage } from "@/pages/AdminPage";
+import WalletsPage from "@/pages/WalletsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { LandingPage } from "@/pages/LandingPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
           {
             path: "/expenses",
             element: <ExpensesPage />,
+          },
+          {
+            path: "/wallets",
+            element: <WalletsPage />,
           },
           {
             path: "/settings",

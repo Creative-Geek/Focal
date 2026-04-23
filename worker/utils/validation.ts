@@ -20,6 +20,7 @@ export const expenseSchema = z.object({
     total: z.number().min(0, 'Total must be a non-negative number'),
     currency: z.string().length(3, 'Currency must be a 3-letter ISO code'),
     category: z.enum(['Food & Drink', 'Groceries', 'Travel', 'Shopping', 'Utilities', 'Other']),
+    walletId: z.string().optional().nullable(),
     lineItems: z.array(
         z.object({
             description: z.string().min(1, 'Description is required'),
