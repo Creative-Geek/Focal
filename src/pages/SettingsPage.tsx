@@ -16,9 +16,8 @@ import { useUserSettings, AIProvider } from "@/hooks/useUserSettings";
 const CURRENCIES = ["CAD", "EGP", "EUR", "GBP", "JPY", "SAR", "USD"];
 const AI_PROVIDERS = [
   { value: "gemini", label: "Google Gemini" },
-  { value: "openai", label: "OpenAI GPT-4o" },
-  { value: "nvidia", label: "Nvidia NIM (Experimental)" },
-  { value: "groq", label: "Groq (OCR + LLM)" },
+  { value: "nvidia", label: "Nvidia NIM (Nemotron 3.5 VL)" },
+  { value: "groq", label: "Groq (Qwen 3.8 Vision)" },
 ];
 
 export const SettingsPage: React.FC = () => {

@@ -68,7 +68,7 @@ export class GeminiProvider extends BaseAIProvider {
                                                 },
                                                 price: {
                                                     type: SchemaType.NUMBER,
-                                                    description: 'Item price',
+                                                    description: 'Unit price for a single item (quantity * price equals line subtotal)',
                                                     nullable: false,
                                                 },
                                             },
@@ -96,7 +96,7 @@ export class GeminiProvider extends BaseAIProvider {
 
                     const response = result.response;
                     const text = response.text();
-                    return JSON.parse(text);
+                    return this.parseExpenseResponse(text);
                 },
                 'GeminiProvider'
             );

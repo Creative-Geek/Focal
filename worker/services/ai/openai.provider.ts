@@ -1,19 +1,29 @@
 import OpenAI from 'openai';
 import { BaseAIProvider, AIResponse } from './base.service';
 
+export const DEFAULT_OPENAI_COMP_BASE_URL = 'https://openrouter.ai/api/v1';
+export const DEFAULT_OPENAI_COMP_MODEL = 'openrouter/free';
+
 /**
- * OpenAI Provider (GitHub Models)
- * Uses GPT-4o from GitHub Models API
+ * Generic OpenAI-Compatible Provider
+ * Defaults to OpenRouter's free models router (https://openrouter.ai/api/v1, model: openrouter/free).
+ * Wired up via OPENAI_COMP_* env vars but currently disabled from active UI/handlers.
  */
 export class OpenAIProvider extends BaseAIProvider {
     private apiKeys: string[];
     private modelName: string;
+    private baseURL: string;
 
-    constructor(apiKeys: string | string[], modelName: string = 'gpt-4o') {
+    constructor(
+        apiKeys: string | string[],
+        modelName: string = DEFAULT_OPENAI_COMP_MODEL,
+        baseURL: string = DEFAULT_OPENAI_COMP_BASE_URL
+    ) {
         super();
         // Support both single key (backward compatible) and array of keys
         this.apiKeys = Array.isArray(apiKeys) ? apiKeys : [apiKeys];
         this.modelName = modelName;
+        this.baseURL = baseURL;
     }
 
     async processReceipt(base64Image: string): Promise<AIResponse> {
@@ -24,8 +34,11 @@ export class OpenAIProvider extends BaseAIProvider {
                 this.apiKeys,
                 async (apiKey) => {
                     const client = new OpenAI({
-                        baseURL: 'https://models.github.ai/inference',
+                        baseURL: this.baseURL,
                         apiKey: apiKey,
+                        defaultHeaders: {
+                            'X-Title': 'Focal',
+                        },
                     });
 
                     // Define JSON schema for structured output
@@ -70,7 +83,7 @@ export class OpenAIProvider extends BaseAIProvider {
                                                 },
                                                 price: {
                                                     type: 'number',
-                                                    description: 'Item price',
+                                                    description: 'Unit price for a single item (quantity * price equals line subtotal)',
                                                 },
                                             },
                                             required: ['description', 'quantity', 'price'],
@@ -102,22 +115,22 @@ export class OpenAIProvider extends BaseAIProvider {
                                     },
                                     {
                                         type: 'text',
-                                        text: 'Extract the receipt information following the specified schema.',
+                                        text: 'Extract the receipt information following the specified schema. Return ONLY valid JSON.',
                                     },
                                 ],
                             },
                         ],
                         response_format: responseFormat,
                         temperature: 0.1,
-                        max_tokens: 2000,
+                        max_tokens: 4000,
                     });
 
                     const message = completion.choices[0]?.message;
                     if (!message?.content) {
-                        throw new Error('No response from OpenAI');
+                        throw new Error('No response from OpenAI-compatible provider');
                     }
 
-                    return JSON.parse(message.content);
+                    return this.parseExpenseResponse(message.content);
                 },
                 'OpenAIProvider'
             );

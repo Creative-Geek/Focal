@@ -23,42 +23,41 @@ APP_URL="http://localhost:3000"
 NODE_ENV="development"
 
 # AI Provider Configuration
-# Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
+# Active options: 'gemini' | 'nvidia' | 'groq'
 AI_PROVIDER="gemini"
 
-# AI Provider API Keys (configure the one matching your AI_PROVIDER)
-# GEMINI_API_KEY - For Google Gemini (default)
+# AI Provider API Keys (configure keys for the providers you want to enable)
+# GEMINI_API_KEY - For Google Gemini (default: gemini-2.5-flash; also used for audio)
 # Get from: https://aistudio.google.com/app/apikey
 GEMINI_API_KEY="your-gemini-api-key-here"
 
 # GEMINI_API_KEY_2 - Fallback Gemini API key for rate limit/error scenarios (optional)
 # GEMINI_API_KEY_2="your-secondary-gemini-api-key-here"
 
-# GITHUB_TOKEN - For OpenAI GPT-4o via GitHub Models
-# Get from: https://github.com/settings/tokens
-# GITHUB_TOKEN="your-github-token-here"
-
-# GITHUB_TOKEN_2 - Fallback GitHub token for rate limit/error scenarios (optional)
-# GITHUB_TOKEN_2="your-secondary-github-token-here"
-
-# NVIDIA_API_KEY - For Nvidia NIM
+# NVIDIA_API_KEY - For Nvidia NIM (default: nvidia/nemotron-3.5-super-vl-120b-a12b)
 # Get from: https://build.nvidia.com/
 # NVIDIA_API_KEY="your-nvidia-api-key-here"
 
 # NVIDIA_API_KEY_2 - Fallback Nvidia API key for rate limit/error scenarios (optional)
 # NVIDIA_API_KEY_2="your-secondary-nvidia-api-key-here"
 
-# GROQ_API_KEY - For Groq (OCR + LLM approach)
+# GROQ_API_KEY - For Groq direct vision (default: qwen/qwen3.8-27b)
 # Get from: https://console.groq.com/keys
 # GROQ_API_KEY="your-groq-api-key-here"
 
 # GROQ_API_KEY_2 - Fallback Groq API key for rate limit/error scenarios (optional)
 # GROQ_API_KEY_2="your-secondary-groq-api-key-here"
 
-# Azure Computer Vision (Required for Groq provider only)
-# Get from: https://portal.azure.com
+# Generic OpenAI-Compatible Provider (wired for OpenRouter, currently unused in UI/handlers)
+# Get from: https://openrouter.ai/keys (or any OpenAI-compatible provider)
+# OPENAI_COMP_API_KEY="your-openai-compatible-api-key-here"
+# OPENAI_COMP_API_KEY_2="your-secondary-openai-compatible-api-key-here"
+# OPENAI_COMP_BASE_URL="https://openrouter.ai/api/v1"
+# OPENAI_COMP_MODEL="openrouter/free"
+
+# Legacy Azure Computer Vision (no longer required for Groq; only for unused legacy OCR+LLM path)
 # AZURE_VISION_ENDPOINT="https://your-resource.cognitiveservices.azure.com/"
 # AZURE_VISION_KEY="your-azure-vision-key-here"
 
-# Optional: Override default model for any provider
-# AI_MODEL="gemini-2.5-pro"  # or "gpt-4o", "llama-3.3-70b-versatile", etc.
+# Optional: Override default model for any active provider
+# AI_MODEL="gemini-2.5-pro"  # or "nvidia/nemotron-3.5-super-vl-120b-a12b", "qwen/qwen3.8-27b", etc.

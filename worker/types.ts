@@ -11,22 +11,26 @@ export interface Env {
     ADMIN_EMAIL?: string; // Optional: Email address with admin access
 
     // AI Provider Configuration
-    AI_PROVIDER?: string; // AI provider to use: 'gemini' | 'openai' | 'nvidia' | 'groq' (defaults to 'gemini')
-    AI_MODEL?: string; // Optional: Override default model for the provider
+    AI_PROVIDER?: string; // Active AI provider: 'gemini' | 'nvidia' | 'groq' (defaults to 'gemini')
+    AI_MODEL?: string; // Optional: Override default model for the active provider
 
-    // AI Provider API Keys (configure the one matching your AI_PROVIDER)
+    // AI Provider API Keys (configure the ones for active providers)
     GEMINI_API_KEY?: string; // For Google Gemini (gemini-2.5-flash, gemini-2.5-pro, etc.)
     GEMINI_API_KEY_2?: string; // Fallback Gemini API key for rate limit/error scenarios
-    GITHUB_TOKEN?: string; // For GitHub Models (OpenAI GPT-4o)
-    GITHUB_TOKEN_2?: string; // Fallback GitHub token for rate limit/error scenarios
-    NVIDIA_API_KEY?: string; // For Nvidia NIM (llama-3.2-90b-vision-instruct)
+    NVIDIA_API_KEY?: string; // For Nvidia NIM (nvidia/nemotron-3.5-super-vl-120b-a12b)
     NVIDIA_API_KEY_2?: string; // Fallback Nvidia API key for rate limit/error scenarios
-    GROQ_API_KEY?: string; // For Groq (llama-3.3-70b-versatile, etc.)
+    GROQ_API_KEY?: string; // For Groq direct vision (qwen/qwen3.8-27b)
     GROQ_API_KEY_2?: string; // Fallback Groq API key for rate limit/error scenarios
 
-    // Azure Computer Vision (required for Groq provider OCR)
-    AZURE_VISION_ENDPOINT?: string; // Azure Computer Vision endpoint
-    AZURE_VISION_KEY?: string; // Azure Computer Vision API key
+    // Generic OpenAI-Compatible Provider (wired for OpenRouter, currently not exposed/called)
+    OPENAI_COMP_API_KEY?: string; // Primary API key (e.g. OpenRouter API key)
+    OPENAI_COMP_API_KEY_2?: string; // Fallback API key for rate limit/error scenarios
+    OPENAI_COMP_BASE_URL?: string; // Optional base URL override (defaults to https://openrouter.ai/api/v1)
+    OPENAI_COMP_MODEL?: string; // Optional model override (defaults to openrouter/free)
+
+    // Legacy Azure Computer Vision (unused by default; kept only for legacy Groq OCR+LLM method)
+    AZURE_VISION_ENDPOINT?: string;
+    AZURE_VISION_KEY?: string;
 }
 
 export interface User {
@@ -45,7 +49,7 @@ export interface ApiKey {
     user_id: string;
     encrypted_key: string;
     default_currency: string;
-    ai_provider?: string; // User's preferred AI provider: 'gemini' | 'openai' | 'nvidia' | 'groq'
+    ai_provider?: string; // User's preferred AI provider: 'gemini' | 'nvidia' | 'groq' (legacy 'openai' falls back to 'gemini')
     created_at: number;
 }
 

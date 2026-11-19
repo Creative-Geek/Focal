@@ -110,6 +110,7 @@ Key guidelines:
 - Assign appropriate categories based on merchant type and items mentioned (Food & Drink, Groceries, Travel, Shopping, Utilities, Other)
 - If prices aren't explicitly stated, use your best judgment based on typical market prices
 - If quantity isn't mentioned, assume 1
+- For each line item, "price" must be the unit price for a single unit (so quantity * price equals the line subtotal)
 - Be thorough and extract every receipt mentioned in the audio
 - Provide the final output in the same language as the audio
 ${currencyContext}
@@ -176,7 +177,7 @@ Return a list of all receipts found in the audio.`;
                                                             },
                                                             price: {
                                                                 type: SchemaType.NUMBER,
-                                                                description: 'Item price',
+                                                                description: 'Unit price for a single item (quantity * price equals line subtotal)',
                                                                 nullable: false,
                                                             },
                                                         },

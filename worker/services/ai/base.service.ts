@@ -70,9 +70,75 @@ export abstract class BaseAIProvider {
 
 Important:
 - Extract the raw numeric total value without any currency symbols
+- For each line item, "price" MUST be the unit price for a single unit (so quantity * price equals the line subtotal). If a receipt prints both unit price and line total, use the unit price. If only a line total is shown for quantity > 1, divide it by quantity. If quantity is not shown, use 1.
 - If date is unclear or not visible, use ${currentDate} (today's date: ${currentDate})
 - If lineItems are not visible or unclear, return an empty array
 - All fields are required and must match the schema`;
+    }
+
+    /**
+     * Parse and validate a JSON expense payload from model output
+     */
+    protected parseExpenseResponse(content: string): ExpenseData {
+        // Strip optional reasoning blocks if a model emits inline thinking tags
+        let jsonText = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+        // Extract JSON from markdown code blocks if present
+        const fencedMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (fencedMatch) {
+            jsonText = fencedMatch[1].trim();
+        }
+
+        // Fall back to extracting the outer JSON object if wrapped in prose
+        if (!jsonText.startsWith('{')) {
+            const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                jsonText = jsonMatch[0];
+            } else {
+                throw new Error('Could not extract valid JSON from response');
+            }
+        }
+
+        const data = JSON.parse(jsonText);
+
+        const total = typeof data.total === 'number' ? data.total : Number(data.total);
+        if (!data.merchant || !data.date || Number.isNaN(total) || !data.category) {
+            throw new Error('Missing required fields in structured data');
+        }
+
+        const allowedCategories: ExpenseData['category'][] = [
+            'Food & Drink',
+            'Groceries',
+            'Travel',
+            'Shopping',
+            'Utilities',
+            'Other',
+        ];
+        const category: ExpenseData['category'] = allowedCategories.includes(data.category)
+            ? data.category
+            : 'Other';
+
+        const lineItems: LineItem[] = Array.isArray(data.lineItems)
+            ? data.lineItems
+                .filter((item: any) => item && typeof item.description === 'string' && item.description.trim() !== '')
+                .map((item: any) => {
+                    const quantity = Number(item.quantity);
+                    const price = Number(item.price);
+                    return {
+                        description: item.description.trim(),
+                        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+                        price: Number.isFinite(price) && price >= 0 ? price : 0,
+                    };
+                })
+            : [];
+
+        return {
+            merchant: String(data.merchant).trim(),
+            date: String(data.date).trim(),
+            total,
+            category,
+            lineItems,
+        };
     }
 
     /**

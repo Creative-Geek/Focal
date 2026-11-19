@@ -2,7 +2,7 @@ import { Context } from 'hono';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
 import { RateLimitService } from '../services/rateLimit.service';
-import { AIProviderFactory, AIProviderType } from '../services/ai/factory';
+import { AIProviderFactory, ActiveAIProviderType, isActiveAIProvider } from '../services/ai/factory';
 import { AudioService } from '../services/audio.service';
 import { validateRequest, processReceiptSchema, validateImageDimensions } from '../utils/validation';
 import { success, error, json } from '../utils/response';
@@ -63,14 +63,20 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         );
     }
 
-    // Get user's AI provider preference (fallback to env, then gemini)
+    // Get user's AI provider preference (fallback to env, then gemini; retire inactive providers like 'openai')
     const userSettings = await dbService.getApiKey(userId);
-    const providerType = (userSettings?.ai_provider || env.AI_PROVIDER || 'gemini') as AIProviderType;
+    const configuredProvider = userSettings?.ai_provider || env.AI_PROVIDER || 'gemini';
+    const providerType: ActiveAIProviderType = isActiveAIProvider(configuredProvider)
+        ? configuredProvider
+        : 'gemini';
     const modelName = env.AI_MODEL;
 
     console.log('[Receipt Handler] Selected provider:', providerType);
     console.log('[Receipt Handler] User setting:', userSettings?.ai_provider);
     console.log('[Receipt Handler] Env default:', env.AI_PROVIDER);
+    if (configuredProvider !== providerType) {
+        console.log('[Receipt Handler] Falling back from inactive provider:', configuredProvider, '->', providerType);
+    }
 
     try {
         // Get the appropriate API key(s) for the provider (includes fallback if configured)
@@ -79,7 +85,7 @@ export async function processReceipt(c: Context<{ Bindings: Env; Variables: Vari
         console.log('[Receipt Handler] Creating provider instance...');
         console.log('[Receipt Handler] API keys available:', apiKeys.length);
 
-        // Create AI provider instance (pass env for Groq provider Azure credentials)
+        // Create AI provider instance
         const aiProvider = AIProviderFactory.createProvider(providerType, apiKeys, modelName, env);
 
         console.log('[Receipt Handler] Processing receipt with', providerType);

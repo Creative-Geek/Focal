@@ -1,10 +1,20 @@
 import { BaseAIProvider } from './base.service';
 import { GeminiProvider } from './gemini.provider';
-import { OpenAIProvider } from './openai.provider';
-import { NvidiaProvider } from './nvidia.provider';
-import { GroqProvider } from './groq.provider';
+import {
+    OpenAIProvider,
+    DEFAULT_OPENAI_COMP_BASE_URL,
+    DEFAULT_OPENAI_COMP_MODEL,
+} from './openai.provider';
+import { NvidiaProvider, DEFAULT_NVIDIA_MODEL } from './nvidia.provider';
+import { GroqProvider, DEFAULT_GROQ_VISION_MODEL } from './groq.provider';
 
-export type AIProviderType = 'gemini' | 'openai' | 'nvidia' | 'groq';
+export const ACTIVE_AI_PROVIDERS = ['gemini', 'nvidia', 'groq'] as const;
+export type ActiveAIProviderType = (typeof ACTIVE_AI_PROVIDERS)[number];
+export type AIProviderType = ActiveAIProviderType | 'openai';
+
+export function isActiveAIProvider(value: unknown): value is ActiveAIProviderType {
+    return typeof value === 'string' && (ACTIVE_AI_PROVIDERS as readonly string[]).includes(value);
+}
 
 /**
  * Factory to create AI provider instances based on environment configuration
@@ -15,7 +25,7 @@ export class AIProviderFactory {
      * @param providerType - The type of AI provider to create
      * @param apiKeys - API key(s) for the provider (string or array of strings for fallback)
      * @param modelName - Optional model name override
-     * @param env - Environment variables (needed for Groq provider Azure credentials)
+     * @param env - Environment variables (optional provider-specific config like OPENAI_COMP_BASE_URL)
      */
     static createProvider(
         providerType: AIProviderType,
@@ -28,20 +38,21 @@ export class AIProviderFactory {
                 return new GeminiProvider(apiKeys, modelName || 'gemini-2.5-flash');
 
             case 'openai':
-                return new OpenAIProvider(apiKeys, modelName || 'gpt-4o');
+                return new OpenAIProvider(
+                    apiKeys,
+                    modelName || env?.OPENAI_COMP_MODEL || DEFAULT_OPENAI_COMP_MODEL,
+                    env?.OPENAI_COMP_BASE_URL || DEFAULT_OPENAI_COMP_BASE_URL
+                );
 
             case 'nvidia':
-                return new NvidiaProvider(apiKeys, modelName || 'meta/llama-3.2-90b-vision-instruct');
+                return new NvidiaProvider(apiKeys, modelName || DEFAULT_NVIDIA_MODEL);
 
             case 'groq':
-                if (!env?.AZURE_VISION_ENDPOINT || !env?.AZURE_VISION_KEY) {
-                    throw new Error('Azure Vision credentials not configured for Groq provider');
-                }
                 return new GroqProvider(
                     apiKeys,
-                    env.AZURE_VISION_ENDPOINT,
-                    env.AZURE_VISION_KEY,
-                    modelName || 'openai/gpt-oss-20b'
+                    modelName || DEFAULT_GROQ_VISION_MODEL,
+                    env?.AZURE_VISION_ENDPOINT,
+                    env?.AZURE_VISION_KEY
                 );
 
             default:
@@ -61,10 +72,10 @@ export class AIProviderFactory {
                 return env.GEMINI_API_KEY;
 
             case 'openai':
-                if (!env.GITHUB_TOKEN) {
-                    throw new Error('GITHUB_TOKEN not configured');
+                if (!env.OPENAI_COMP_API_KEY) {
+                    throw new Error('OPENAI_COMP_API_KEY not configured');
                 }
-                return env.GITHUB_TOKEN;
+                return env.OPENAI_COMP_API_KEY;
 
             case 'nvidia':
                 if (!env.NVIDIA_API_KEY) {
@@ -102,12 +113,12 @@ export class AIProviderFactory {
                 break;
 
             case 'openai':
-                if (!env.GITHUB_TOKEN) {
-                    throw new Error('GITHUB_TOKEN not configured');
+                if (!env.OPENAI_COMP_API_KEY) {
+                    throw new Error('OPENAI_COMP_API_KEY not configured');
                 }
-                keys.push(env.GITHUB_TOKEN);
-                if (env.GITHUB_TOKEN_2) {
-                    keys.push(env.GITHUB_TOKEN_2);
+                keys.push(env.OPENAI_COMP_API_KEY);
+                if (env.OPENAI_COMP_API_KEY_2) {
+                    keys.push(env.OPENAI_COMP_API_KEY_2);
                 }
                 break;
 
@@ -146,11 +157,11 @@ export class AIProviderFactory {
             case 'gemini':
                 return 'gemini-2.5-flash';
             case 'openai':
-                return 'gpt-4o';
+                return DEFAULT_OPENAI_COMP_MODEL;
             case 'nvidia':
-                return 'meta/llama-3.2-90b-vision-instruct';
+                return DEFAULT_NVIDIA_MODEL;
             case 'groq':
-                return 'openai/gpt-oss-20b';
+                return DEFAULT_GROQ_VISION_MODEL;
             default:
                 return '';
         }

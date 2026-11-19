@@ -18,7 +18,7 @@ database_id = "85a073b1-3c48-4a21-bf35-68e7c473d654"
 # Environment variables (use wrangler secrets for production)
 [vars]
 NODE_ENV = "production"
-AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
+AI_PROVIDER = "gemini"  # Active options: 'gemini' | 'nvidia' | 'groq'
 
 # Production secrets (set using wrangler secret put):
 # JWT_SECRET - Secret key for JWT token signing
@@ -27,14 +27,20 @@ AI_PROVIDER = "gemini"  # Options: 'gemini' | 'openai' | 'nvidia' | 'groq'
 # APP_URL - (Optional) Application URL for email verification links (e.g., https://focal-expense.app)
 # ADMIN_EMAIL - (Optional) Email address for admin access (e.g., admin@example.com)
 #
-# AI Provider Secrets (configure the one matching your AI_PROVIDER):
-# GEMINI_API_KEY - Google Gemini API key (for AI_PROVIDER=gemini)
-# GITHUB_TOKEN - GitHub token for GitHub Models (for AI_PROVIDER=openai)
-# NVIDIA_API_KEY - Nvidia NIM API key (for AI_PROVIDER=nvidia)
-# GROQ_API_KEY - Groq API key (for AI_PROVIDER=groq)
-# AZURE_VISION_ENDPOINT - Azure Computer Vision endpoint (required for AI_PROVIDER=groq)
-# AZURE_VISION_KEY - Azure Computer Vision API key (required for AI_PROVIDER=groq)
-# AI_MODEL - (Optional) Override default model (e.g., 'gemini-2.5-pro', 'gpt-4o', 'llama-3.3-70b-versatile')
+# AI Provider Secrets (configure keys for all enabled providers):
+# GEMINI_API_KEY - Google Gemini API key (default model: gemini-2.5-flash; also used for audio)
+# GEMINI_API_KEY_2 - (Optional) Fallback Gemini API key
+# NVIDIA_API_KEY - Nvidia NIM API key (default model: nvidia/nemotron-3.5-super-vl-120b-a12b)
+# NVIDIA_API_KEY_2 - (Optional) Fallback Nvidia API key
+# GROQ_API_KEY - Groq API key (default model: qwen/qwen3.8-27b direct vision)
+# GROQ_API_KEY_2 - (Optional) Fallback Groq API key
+# AI_MODEL - (Optional) Override default model for the active provider
+#
+# OpenAI-Compatible Provider (wired for OpenRouter, currently unused in UI/handlers):
+# OPENAI_COMP_API_KEY - (Optional) OpenAI-compatible API key (e.g. OpenRouter)
+# OPENAI_COMP_API_KEY_2 - (Optional) Fallback OpenAI-compatible API key
+# OPENAI_COMP_BASE_URL - (Optional) Base URL override (defaults to https://openrouter.ai/api/v1)
+# OPENAI_COMP_MODEL - (Optional) Model override (defaults to openrouter/free)
 
 [observability]
 [observability.logs]

@@ -1,15 +1,17 @@
 import { BaseAIProvider, AIResponse } from './base.service';
 
+export const DEFAULT_NVIDIA_MODEL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+
 /**
  * Nvidia NIM Provider
- * Uses llama-3.2-90b-vision-instruct model
+ * Uses nvidia/nemotron-3.5-super-vl-120b-a12b by default
  */
 export class NvidiaProvider extends BaseAIProvider {
     private apiKeys: string[];
     private modelName: string;
     private invokeUrl: string;
 
-    constructor(apiKeys: string | string[], modelName: string = 'meta/llama-3.2-90b-vision-instruct') {
+    constructor(apiKeys: string | string[], modelName: string = DEFAULT_NVIDIA_MODEL) {
         super();
         // Support both single key (backward compatible) and array of keys
         this.apiKeys = Array.isArray(apiKeys) ? apiKeys : [apiKeys];
@@ -28,43 +30,69 @@ export class NvidiaProvider extends BaseAIProvider {
                     const jsonSchema = {
                         type: 'object',
                         properties: {
-                            merchant: { type: 'string' },
-                            date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-                            total: { type: 'number' },
+                            merchant: {
+                                type: 'string',
+                                description: 'Store or restaurant name',
+                            },
+                            date: {
+                                type: 'string',
+                                description: 'Transaction date in YYYY-MM-DD format',
+                            },
+                            total: {
+                                type: 'number',
+                                description: 'Total amount (number only, no currency symbols)',
+                            },
                             category: {
                                 type: 'string',
+                                description: 'Expense category',
                                 enum: ['Food & Drink', 'Groceries', 'Travel', 'Shopping', 'Utilities', 'Other'],
                             },
                             lineItems: {
                                 type: 'array',
+                                description: 'Individual items from the receipt',
                                 items: {
                                     type: 'object',
                                     properties: {
-                                        description: { type: 'string' },
-                                        quantity: { type: 'number' },
-                                        price: { type: 'number' },
+                                        description: {
+                                            type: 'string',
+                                            description: 'Item description',
+                                        },
+                                        quantity: {
+                                            type: 'number',
+                                            description: 'Item quantity',
+                                        },
+                                        price: {
+                                            type: 'number',
+                                            description: 'Unit price for a single item (quantity * price equals line subtotal)',
+                                        },
                                     },
                                     required: ['description', 'quantity', 'price'],
+                                    additionalProperties: false,
                                 },
                             },
                         },
                         required: ['merchant', 'date', 'total', 'category', 'lineItems'],
+                        additionalProperties: false,
                     };
 
-                    // Prepare the message with image
+                    // Prepare the messages with system prompt and receipt image
                     const messages = [
+                        {
+                            role: 'system',
+                            content: this.getSystemInstruction(),
+                        },
                         {
                             role: 'user',
                             content: [
-                                {
-                                    type: 'text',
-                                    text: this.getSystemInstruction(),
-                                },
                                 {
                                     type: 'image_url',
                                     image_url: {
                                         url: `data:image/${mimeType};base64,${imageData}`,
                                     },
+                                },
+                                {
+                                    type: 'text',
+                                    text: 'Extract the receipt information following the specified schema.',
                                 },
                             ],
                         },
@@ -73,13 +101,19 @@ export class NvidiaProvider extends BaseAIProvider {
                     const payload = {
                         model: this.modelName,
                         messages: messages,
-                        max_tokens: 2048,
-                        temperature: 0.1,
+                        max_tokens: 8192,
+                        temperature: 0.2,
                         top_p: 0.95,
                         stream: false,
-                        extra_body: {
-                            nvext: {
-                                guided_json: jsonSchema,
+                        chat_template_kwargs: {
+                            enable_thinking: false,
+                        },
+                        response_format: {
+                            type: 'json_schema',
+                            json_schema: {
+                                name: 'receipt_extraction',
+                                strict: true,
+                                schema: jsonSchema,
                             },
                         },
                     };
@@ -106,29 +140,7 @@ export class NvidiaProvider extends BaseAIProvider {
                         throw new Error('No response from Nvidia API');
                     }
 
-                    // Parse the JSON response
-                    // With guided_json, the response should be clean JSON
-                    // But keep fallback extraction for robustness
-                    let jsonText = content.trim();
-
-                    // Try to extract JSON from markdown code blocks if present
-                    if (jsonText.startsWith('```json')) {
-                        jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                    } else if (jsonText.startsWith('```')) {
-                        jsonText = jsonText.replace(/```\n?/g, '').trim();
-                    }
-
-                    // If guided_json failed and we have prose text, try to extract JSON with regex
-                    if (!jsonText.startsWith('{')) {
-                        const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) {
-                            jsonText = jsonMatch[0];
-                        } else {
-                            throw new Error('Could not extract valid JSON from response');
-                        }
-                    }
-
-                    return JSON.parse(jsonText);
+                    return this.parseExpenseResponse(content);
                 },
                 'NvidiaProvider'
             );

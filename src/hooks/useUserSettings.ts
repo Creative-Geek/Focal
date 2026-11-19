@@ -14,7 +14,7 @@ const getAuthHeaders = (): HeadersInit => {
     return headers;
 };
 
-export type AIProvider = 'gemini' | 'openai' | 'nvidia' | 'groq';
+export type AIProvider = 'gemini' | 'nvidia' | 'groq';
 
 interface UserSettings {
     defaultCurrency: string;
@@ -61,8 +61,11 @@ export const useUserSettings = (): UseUserSettingsReturn => {
 
             if (providerResponse.ok) {
                 const providerData = await providerResponse.json();
-                if (providerData.data?.aiProvider) {
-                    setAiProvider(providerData.data.aiProvider);
+                const provider = providerData.data?.aiProvider;
+                if (provider === 'gemini' || provider === 'nvidia' || provider === 'groq') {
+                    setAiProvider(provider);
+                } else {
+                    setAiProvider('gemini');
                 }
             }
         } catch (error) {

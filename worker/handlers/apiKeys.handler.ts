@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import { Env } from '../types';
 import { DBService } from '../services/db.service';
+import { ACTIVE_AI_PROVIDERS, isActiveAIProvider } from '../services/ai/factory';
 import { success, error, json } from '../utils/response';
 
 type Variables = {
@@ -63,10 +64,13 @@ export async function getAIProvider(c: Context<{ Bindings: Env; Variables: Varia
     const dbService = new DBService(env.DB);
 
     const settings = await dbService.getApiKey(userId);
+    const aiProvider = isActiveAIProvider(settings?.ai_provider)
+        ? settings.ai_provider
+        : 'gemini';
 
     return json(
         success({
-            aiProvider: settings?.ai_provider || 'gemini',
+            aiProvider,
         })
     );
 }
@@ -84,9 +88,12 @@ export async function updateAIProvider(c: Context<{ Bindings: Env; Variables: Va
         const body = await c.req.json();
         const { aiProvider } = body;
 
-        // Validate provider
-        if (!aiProvider || !['gemini', 'openai', 'nvidia', 'groq'].includes(aiProvider)) {
-            return error('Invalid AI provider. Must be one of: gemini, openai, nvidia, groq', 400);
+        // Validate provider against active UI providers
+        if (!isActiveAIProvider(aiProvider)) {
+            return error(
+                `Invalid AI provider. Must be one of: ${ACTIVE_AI_PROVIDERS.join(', ')}`,
+                400
+            );
         }
 
         // Update provider
